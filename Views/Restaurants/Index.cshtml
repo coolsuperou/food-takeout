@@ -1,0 +1,47 @@
+@model IEnumerable<food_takeout.Models.Restaurant>
+
+@{
+    ViewBag.Title = "餐厅列表";
+}
+
+<h2>餐厅列表</h2>
+
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        @Html.ActionLink("创建新餐厅", "Create", null, new { @class = "btn btn-primary" })
+    </p>
+}
+
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 col-sm-6 mb-4">
+            <div class="card h-100">
+                <div style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <img src="/Content/Images/restaurant-placeholder.jpg" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                    }
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">@item.Name</h4>
+                    <p class="card-text">@item.Location</p>
+                    <p>
+                        @Html.ActionLink("查看菜单", "Details", new { id = item.RestaurantId }, new { @class = "btn btn-info btn-sm" })
+                        @if (User.IsInRole("Admin"))
+                        {
+                            @Html.ActionLink("编辑", "Edit", new { id = item.RestaurantId }, new { @class = "btn btn-warning btn-sm" })
+                            @Html.ActionLink("删除", "Delete", new { id = item.RestaurantId }, new { @class = "btn btn-danger btn-sm" })
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+ 

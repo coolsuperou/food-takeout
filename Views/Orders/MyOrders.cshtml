@@ -1,0 +1,120 @@
+@model IEnumerable<food_takeout.Models.Order>
+
+@{
+    ViewBag.Title = "我的订单";
+}
+
+<h2>我的订单</h2>
+
+<div class="mb-3">
+    @Html.ActionLink("点新的订单", "SelectRestaurant", null, new { @class = "btn btn-primary" })
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>订单编号</th>
+                    <th>餐厅</th>
+                    <th>状态</th>
+                    <th>下单时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td>@order.OrderId</td>
+                        <td>@order.Restaurant.Name</td>
+                        <td>
+                            @{
+                                string statusClass = "";
+                                switch (order.Status)
+                                {
+                                    case food_takeout.Models.OrderStatus.Pending:
+                                        statusClass = "badge bg-warning text-dark";
+                                        break;
+                                    case food_takeout.Models.OrderStatus.Preparing:
+                                        statusClass = "badge bg-info text-white";
+                                        break;
+                                    case food_takeout.Models.OrderStatus.ReadyForDelivery:
+                                        statusClass = "badge bg-primary";
+                                        break;
+                                    case food_takeout.Models.OrderStatus.InDelivery:
+                                        statusClass = "badge bg-primary";
+                                        break;
+                                    case food_takeout.Models.OrderStatus.Delivered:
+                                        statusClass = "badge bg-success";
+                                        break;
+                                    case food_takeout.Models.OrderStatus.Cancelled:
+                                        statusClass = "badge bg-danger";
+                                        break;
+                                }
+                            }
+                            <span class="@statusClass">@Html.DisplayFor(modelItem => order.Status)</span>
+                        </td>
+                        <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <div class="btn-group">
+                                @Html.ActionLink("详情", "Details", new { id = order.OrderId }, new { @class = "btn btn-info btn-sm" })
+                                
+                                @if (order.Status == food_takeout.Models.OrderStatus.Pending)
+                                {
+                                    using (Html.BeginForm("Cancel", "Orders", new { id = order.OrderId }, FormMethod.Post, new { style = "display:inline" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要取消此订单吗？');">
+                                            取消订单
+                                        </button>
+                                    }
+                                }
+                                
+                                @if (order.Status == food_takeout.Models.OrderStatus.Delivered)
+                                {
+                                    // 检查订单是否已经评价
+                                    bool hasReview = ViewBag.ReviewedOrders != null && ViewBag.ReviewedOrders.Contains(order.OrderId);
+                                    
+                                    if (!hasReview)
+                                    {
+                                        @Html.ActionLink("评价", "Review", new { id = order.OrderId }, new { @class = "btn btn-success btn-sm" })
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        您还没有任何订单。
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // 如果有必要，这里可以添加JavaScript代码
+        });
+    </script>
+} 

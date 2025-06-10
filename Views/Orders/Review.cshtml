@@ -1,0 +1,88 @@
+@model food_takeout.Models.Review
+
+@{
+    ViewBag.Title = "评价订单";
+    var order = ViewBag.Order as food_takeout.Models.Order;
+}
+
+<h2>评价订单</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>订单信息</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">订单编号</dt>
+                    <dd class="col-sm-9">@order.OrderId</dd>
+                    
+                    <dt class="col-sm-3">餐厅</dt>
+                    <dd class="col-sm-9">@order.Restaurant.Name</dd>
+                    
+                    <dt class="col-sm-3">下单时间</dt>
+                    <dd class="col-sm-9">@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4>评价</h4>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("SubmitReview", "Orders", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                    @Html.HiddenFor(model => model.OrderId)
+                    @Html.HiddenFor(model => model.CustomerId)
+                    @Html.HiddenFor(model => model.RestaurantId)
+                    
+                    <div class="form-group">
+                        @Html.LabelFor(model => model.Rating, "评分 (1-5分)", htmlAttributes: new { @class = "control-label" })
+                        <div class="rating">
+                            <div class="form-check form-check-inline">
+                                @Html.RadioButtonFor(model => model.Rating, 5, new { @class = "form-check-input", id = "rating5" })
+                                <label class="form-check-label" for="rating5">5分（非常满意）</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                @Html.RadioButtonFor(model => model.Rating, 4, new { @class = "form-check-input", id = "rating4" })
+                                <label class="form-check-label" for="rating4">4分（满意）</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                @Html.RadioButtonFor(model => model.Rating, 3, new { @class = "form-check-input", id = "rating3" })
+                                <label class="form-check-label" for="rating3">3分（一般）</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                @Html.RadioButtonFor(model => model.Rating, 2, new { @class = "form-check-input", id = "rating2" })
+                                <label class="form-check-label" for="rating2">2分（不满意）</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                @Html.RadioButtonFor(model => model.Rating, 1, new { @class = "form-check-input", id = "rating1" })
+                                <label class="form-check-label" for="rating1">1分（非常不满意）</label>
+                            </div>
+                        </div>
+                        @Html.ValidationMessageFor(model => model.Rating, "", new { @class = "text-danger" })
+                    </div>
+                    
+                    <div class="form-group mt-3">
+                        @Html.LabelFor(model => model.Comment, "评价内容", htmlAttributes: new { @class = "control-label" })
+                        @Html.TextAreaFor(model => model.Comment, new { @class = "form-control", rows = 5, placeholder = "请输入您的评价内容..." })
+                        @Html.ValidationMessageFor(model => model.Comment, "", new { @class = "text-danger" })
+                    </div>
+                    
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-primary">提交评价</button>
+                        @Html.ActionLink("返回", "Details", new { id = Model.OrderId }, new { @class = "btn btn-secondary" })
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+} 

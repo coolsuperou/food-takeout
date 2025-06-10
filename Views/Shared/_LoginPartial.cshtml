@@ -1,0 +1,25 @@
+@if (Session["CustomerId"] != null)
+{
+    <ul class="navbar-nav ms-auto">
+        <!-- 'ms-auto' replaces 'navbar-right' in Bootstrap 5 -->
+        <li class="nav-item dropdown">
+            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                @Session["CustomerUsername"] <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <!-- 'dropdown-menu-end' for right alignment -->
+                <li><a class="dropdown-item" href="@Url.Action("MyProfile", "Customers")">个人资料</a></li>
+                <li><a class="dropdown-item" href="@Url.Action("MyOrders", "Orders")">我的订单</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")">退出登录</a></li>
+            </ul>
+        </li>
+    </ul>
+}
+else
+{
+    <ul class="navbar-nav ms-auto">
+        <li class="nav-item">@Html.ActionLink("注册", "Register", "Account", null, new { @class = "nav-link", id = "registerLink" })</li>
+        <li class="nav-item">@Html.ActionLink("登录", "Login", "Account", null, new { @class = "nav-link", id = "loginLink" })</li>
+    </ul>
+}

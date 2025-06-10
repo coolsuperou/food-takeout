@@ -1,0 +1,73 @@
+@model IEnumerable<food_takeout.Models.Dish>
+@{
+    ViewBag.Title = "选择菜品";
+    var restaurant = ViewBag.Restaurant as food_takeout.Models.Restaurant;
+}
+
+<h2>@restaurant.Name - 菜单</h2>
+<p>@restaurant.Location</p>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@using (Html.BeginForm("PlaceOrder", "Orders", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="restaurantId" value="@restaurant.RestaurantId" />
+
+    <div class="row">
+        @foreach (var dish in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    @if (!string.IsNullOrEmpty(dish.ImageUrl))
+                    {
+                        <img src="@dish.ImageUrl" class="card-img-top" alt="@dish.Name" style="height: 200px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
+                            <span class="text-muted">暂无图片</span>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@dish.Name</h5>
+                        <p class="card-text">
+                            <strong>价格: </strong>¥@dish.Price.ToString("F2")
+                        </p>
+                        <div class="form-group">
+                            <label>数量</label>
+                            <input type="number" name="quantity_@dish.DishId" value="0" min="0" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            该餐厅暂无可用菜品。
+        </div>
+    }
+    else
+    {
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-success">提交订单</button>
+            @Html.ActionLink("返回选择餐厅", "SelectRestaurant", null, new { @class = "btn btn-secondary" })
+        </div>
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // 可以添加交互效果
+        });
+    </script>
+} 

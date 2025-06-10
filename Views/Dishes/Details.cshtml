@@ -1,0 +1,47 @@
+@model food_takeout.Models.Dish
+
+@{
+    ViewBag.Title = "菜品详情";
+}
+
+<h2>菜品详情</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name">
+        }
+        else
+        {
+            <div class="bg-light text-center p-5 rounded">
+                <span class="text-muted">暂无图片</span>
+            </div>
+        }
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>@Model.Name</h3>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">价格</dt>
+                    <dd class="col-sm-8">¥@Model.Price.ToString("F2")</dd>
+
+                    <dt class="col-sm-4">餐厅</dt>
+                    <dd class="col-sm-8">@Model.Restaurant.Name</dd>
+
+                    <dt class="col-sm-4">状态</dt>
+                    <dd class="col-sm-8">@(Model.IsAvailable ? "可购买" : "已下架")</dd>
+                </dl>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group">
+                    @Html.ActionLink("编辑", "Edit", new { id = Model.DishId }, new { @class = "btn btn-primary" })
+                    @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-secondary" })
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

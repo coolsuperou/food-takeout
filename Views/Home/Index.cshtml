@@ -1,0 +1,50 @@
+﻿@{
+    ViewBag.Title = "餐饮外卖系统";
+}
+
+<div class="jumbotron">
+    <h1>欢迎使用餐饮外卖系统</h1>
+    <p class="lead">浏览餐厅、选择美食、在线下单，享受便捷的外卖体验！</p>
+    <p>
+        @if (Session["CustomerId"] != null)
+        {
+            @Html.ActionLink("立即点餐", "SelectRestaurant", "Orders", null, new { @class = "btn btn-primary btn-lg" })
+            @Html.ActionLink("我的订单", "MyOrders", "Orders", null, new { @class = "btn btn-outline-primary btn-lg ms-2" })
+        }
+        else
+        {
+            @Html.ActionLink("登录", "Login", "Account", null, new { @class = "btn btn-primary btn-lg" })
+            @Html.ActionLink("注册", "Register", "Account", null, new { @class = "btn btn-outline-primary btn-lg ms-2" })
+        }
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">浏览餐厅</h2>
+                <p class="card-text">探索各类餐厅，寻找您喜爱的美食。</p>
+                <p>@Html.ActionLink("查看餐厅", "Index", "Restaurants", null, new { @class = "btn btn-outline-secondary" })</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">在线点餐</h2>
+                <p class="card-text">方便快捷的在线点餐体验，轻松下单。</p>
+                <p>@Html.ActionLink("开始点餐", "SelectRestaurant", "Orders", null, new { @class = "btn btn-outline-secondary" })</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">订单管理</h2>
+                <p class="card-text">查看订单状态，随时了解配送进度。</p>
+                <p>@Html.ActionLink("我的订单", "MyOrders", "Orders", null, new { @class = "btn btn-outline-secondary" })</p>
+            </div>
+        </div>
+    </div>
+</div>

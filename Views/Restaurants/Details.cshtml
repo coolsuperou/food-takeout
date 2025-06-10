@@ -1,0 +1,82 @@
+@model food_takeout.Models.Restaurant
+
+@{
+    ViewBag.Title = "餐厅详情";
+}
+
+<h2>@Model.Name</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="card-img-top" style="max-height: 300px; object-fit: cover;" />
+            }
+            else
+            {
+                <img src="/Content/Images/restaurant-placeholder.jpg" alt="@Model.Name" class="card-img-top" style="max-height: 300px; object-fit: cover;" />
+            }
+            <div class="card-body">
+                <h4>餐厅信息</h4>
+                <dl class="dl-horizontal">
+                    <dt>
+                        @Html.DisplayNameFor(model => model.Name)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.Name)
+                    </dd>
+                    <dt>
+                        @Html.DisplayNameFor(model => model.Location)
+                    </dt>
+                    <dd>
+                        @Html.DisplayFor(model => model.Location)
+                    </dd>
+                </dl>
+                <p>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        @Html.ActionLink("编辑", "Edit", new { id = Model.RestaurantId }, new { @class = "btn btn-warning btn-sm" })
+                    }
+                    @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-default btn-sm" })
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <h3>菜品列表</h3>
+        @if (ViewBag.Dishes != null && ViewBag.Dishes.Count > 0)
+        {
+            <div class="row">
+                @foreach (var item in ViewBag.Dishes)
+                {
+                    <div class="col-md-6 col-sm-12 mb-4">
+                        <div class="card h-100">
+                            <div style="height: 150px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <img src="/Content/Images/dish-placeholder.jpg" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h4 class="card-title">@item.Name</h4>
+                                <p class="card-text">¥@item.Price.ToString("F2")</p>
+                                <p>
+                                    @Html.ActionLink("查看详情", "Details", "Dishes", new { id = item.DishId }, new { @class = "btn btn-info btn-sm" })
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>该餐厅暂无可用菜品</p>
+        }
+    </div>
+</div> 

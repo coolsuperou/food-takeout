@@ -1,0 +1,29 @@
+@model IEnumerable<food_takeout.Models.Restaurant>
+
+@{
+    ViewBag.Title = "选择餐厅";
+}
+
+<h2>选择餐厅</h2>
+
+<div class="row">
+    @foreach (var restaurant in Model)
+    {
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@restaurant.Name</h5>
+                    <p class="card-text">@restaurant.Location</p>
+                    @Html.ActionLink("查看菜单", "SelectDishes", new { id = restaurant.RestaurantId }, new { @class = "btn btn-primary" })
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        目前没有可用的餐厅。
+    </div>
+} 
