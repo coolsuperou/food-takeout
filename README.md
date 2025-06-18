@@ -502,7 +502,7 @@ classDiagram
 
 系统首页清晰展示了系统的主要功能和用户角色，提供了登录、注册和浏览餐厅的快速入口。页面采用现代化设计风格，视觉效果良好。
 
-![image-20250618200043399](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618200043399.png)
+
 
 系统首页包含以下主要部分：
 
@@ -514,13 +514,13 @@ classDiagram
 
 餐厅列表页面以卡片形式展示所有餐厅，包含餐厅名称、图片、评分等信息。用户可以通过分类筛选和搜索功能找到所需餐厅。
 
-![image-20250618200224283](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618200224283.png)
+
 
 #### 4.1.3 菜品管理页
 
 商家可以通过菜品管理页面添加、编辑和删除菜品。页面包含菜品列表和菜品详情编辑表单，支持图片上传和预览功能。
 
-![image-20250618202418792](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618202418792.png)
+
 
 #### 4.1.4 订单管理页
 
@@ -530,25 +530,25 @@ classDiagram
 
    
 
-![image-20250618202708340](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618202708340.png)
+
 
 2、商家可以处理待接单和进行中的订单
 
-![image-20250618202804569](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618202804569.png)
+
 
 导出PDF
 
-![image-20250618203606339](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618203606339.png)
+
 
 3、骑手可以查看待配送和配送历史的订单
 
-![image-20250618203023207](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618203023207.png)
+
 
 #### **4.1.4 商家仪表盘页**
 
 商家可以查看自己的营收数据
 
-![image-20250618203445186](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618203445186.png)
+
 
 ### 4.2 关键功能实现
 
@@ -558,11 +558,11 @@ classDiagram
 
 1、登录
 
-![image-20250618203720949](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618203720949.png)
+
 
 2、注册
 
-![image-20250618203855042](C:\Users\23323\AppData\Roaming\Typora\typora-user-images\image-20250618203855042.png)
+
 
 #### 4.2.1 用户认证实现
 
