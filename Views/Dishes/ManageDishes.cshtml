@@ -1,0 +1,200 @@
+@model IEnumerable<food_takeout.Models.Dish>
+@using food_takeout.Models
+
+@{
+    ViewBag.Title = "管理菜品";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h2><i class="bi bi-menu-button-wide"></i> 菜品管理</h2>
+    <div>
+        @Html.ActionLink("添加菜品", "Create", null, new { @class = "btn btn-primary" })
+    </div>
+</div>
+
+<!-- 提示消息 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- 筛选区域 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchDish" placeholder="搜索菜品名称">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="category-filter">
+                    <button class="btn btn-secondary filter-btn" data-category="all">全部</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="热菜">热菜</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="凉菜">凉菜</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="主食">主食</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="汤类">汤类</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="小吃">小吃</button>
+                    <button class="btn btn-outline-secondary filter-btn" data-category="饮品">饮品</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐藏的删除表单 -->
+@using (Html.BeginForm("Delete", "Dishes", FormMethod.Post, new { id = "deleteForm" }))
+{
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="dishIdToDelete" name="id" value="" />
+}
+
+<!-- 菜品列表 -->
+<div class="row" id="dishList">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 col-sm-6 mb-4 dish-item" data-category="@item.Category">
+            <div class="card dish-card">
+                @if (item.IsHot)
+                {
+                    <span class="badge bg-danger dish-badge">热销</span>
+                }
+                <span class="badge @(item.IsAvailable ? "bg-success" : "bg-secondary") dish-status">
+                    @(item.IsAvailable ? "上架中" : "已下架")
+                </span>
+                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                {
+                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "" : item.ImageUrl)" class="card-img-top dish-img" alt="@item.Name" onerror="this.style.display='none'">
+                }
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">@item.Name</h5>
+                        <span class="text-danger fw-bold">¥@item.Price.ToString("F2")</span>
+                    </div>
+                    <p class="card-text text-muted small">分类：@(string.IsNullOrEmpty(item.Category) ? "未分类" : item.Category)</p>
+                    <p class="card-text small">@(string.IsNullOrEmpty(item.Description) ? "暂无描述" : item.Description)</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">今日售出: @item.SoldCount 份</small>
+                        <div>
+                            @Html.ActionLink("编辑", "Edit", new { id = item.DishId }, new { @class = "btn btn-sm btn-outline-primary me-1" })
+                            <button class="btn btn-sm btn-outline-danger delete-dish" data-dish-id="@item.DishId">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- 无数据提示 -->
+<div class="text-center py-5 d-none" id="noData">
+    <i class="bi bi-inbox display-1 text-muted"></i>
+    <p class="mt-3">暂无菜品数据</p>
+    @Html.ActionLink("添加菜品", "Create", null, new { @class = "btn btn-primary" })
+</div>
+
+<style>
+    .dish-card {
+        position: relative;
+        overflow: hidden;
+    }
+    .dish-img {
+        height: 180px;
+        object-fit: cover;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .dish-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .dish-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+    .category-filter {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    .category-filter::-webkit-scrollbar {
+        height: 4px;
+    }
+    .category-filter::-webkit-scrollbar-thumb {
+        background-color: #4ecdc4;
+        border-radius: 4px;
+    }
+    .category-filter .btn {
+        white-space: nowrap;
+        margin-right: 8px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // 删除菜品
+            $('.delete-dish').click(function () {
+                if (confirm('确定要删除这个菜品吗？')) {
+                    var dishId = $(this).data('dish-id');
+                    $('#dishIdToDelete').val(dishId);
+                    $('#deleteForm').submit();
+                }
+            });
+
+            // 检查是否有菜品
+            function checkEmptyState() {
+                if ($('.dish-item:visible').length === 0) {
+                    $('#noData').removeClass('d-none');
+                } else {
+                    $('#noData').addClass('d-none');
+                }
+            }
+
+            // 初始检查
+            checkEmptyState();
+
+            // 分类筛选
+            $('.filter-btn').click(function () {
+                $('.filter-btn').removeClass('btn-secondary').addClass('btn-outline-secondary');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-secondary');
+                
+                var category = $(this).data('category');
+                if (category === 'all') {
+                    $('.dish-item').show();
+                } else {
+                    $('.dish-item').hide();
+                    $('.dish-item[data-category="' + category + '"]').show();
+                }
+                
+                checkEmptyState();
+            });
+
+            // 搜索功能
+            $('#searchDish').on('keyup', function () {
+                var value = $(this).val().toLowerCase();
+                $('.dish-item').filter(function () {
+                    var nameMatch = $(this).find('.card-title').text().toLowerCase().indexOf(value) > -1;
+                    var descMatch = $(this).find('.card-text:not(.text-muted)').text().toLowerCase().indexOf(value) > -1;
+                    $(this).toggle(nameMatch || descMatch);
+                });
+                
+                checkEmptyState();
+            });
+
+            // 自动关闭提示框
+            setTimeout(function () {
+                $('.alert-success').fadeOut('slow');
+            }, 3000);
+        });
+    </script>
+} 

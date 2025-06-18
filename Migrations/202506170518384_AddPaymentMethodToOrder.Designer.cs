@@ -7,18 +7,18 @@ namespace food_takeout.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.5.1")]
-    public sealed partial class InitialCreate : IMigrationMetadata
+    public sealed partial class AddPaymentMethodToOrder : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(InitialCreate));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(AddPaymentMethodToOrder));
         
         string IMigrationMetadata.Id
         {
-            get { return "202506100246096_InitialCreate"; }
+            get { return "202506170518384_AddPaymentMethodToOrder"; }
         }
         
         string IMigrationMetadata.Source
         {
-            get { return null; }
+            get { return Resources.GetString("Source"); }
         }
         
         string IMigrationMetadata.Target

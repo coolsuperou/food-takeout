@@ -1,0 +1,156 @@
+@model IEnumerable<food_takeout.Models.Order>
+@using food_takeout.Models
+
+@{
+    ViewBag.Title = "配送历史";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history"></i> 配送历史</h2>
+        <a href="@Url.Action("Index", "Rider")" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> 返回骑手中心
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">历史配送记录</h5>
+                <div>
+                    <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "day" })" class="btn btn-sm @(ViewBag.Period == "day" ? "btn-primary" : "btn-outline-primary")">今日</a>
+                    <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "week" })" class="btn btn-sm @(ViewBag.Period == "week" ? "btn-primary" : "btn-outline-primary")">本周</a>
+                    <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "month" })" class="btn btn-sm @(ViewBag.Period == "month" ? "btn-primary" : "btn-outline-primary")">本月</a>
+                    <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "all" })" class="btn btn-sm @(ViewBag.Period == "all" ? "btn-primary" : "btn-outline-primary")">全部</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>餐厅</th>
+                            <th>顾客</th>
+                            <th>配送地址</th>
+                            <th>距离</th>
+                            <th>配送费</th>
+                            <th>配送时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td>@order.OrderNumber</td>
+                                    <td>@(order.Restaurant != null ? order.Restaurant.Name : "未知餐厅")</td>
+                                    <td>@(order.Customer != null ? order.Customer.Username : "未知顾客")</td>
+                                    <td>@order.DeliveryAddress</td>
+                                    <td>@order.Distance km</td>
+                                    <td class="text-success">¥@order.DeliveryFee.ToString("F2")</td>
+                                    <td>
+                                        @if (order.DeliveryStartTime.HasValue && order.ActualDeliveryTime.HasValue)
+                                        {
+                                            var deliveryDuration = (order.ActualDeliveryTime.Value - order.DeliveryStartTime.Value).TotalMinutes;
+                                            <span title="@order.DeliveryStartTime.Value.ToString("HH:mm") 开始配送，@order.ActualDeliveryTime.Value.ToString("HH:mm") 送达">
+                                                @Math.Round(deliveryDuration) 分钟
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>--</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("Details", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> 详情
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                                    <p class="mb-0">暂无配送历史记录</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">收入统计</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted mb-2">今日收入</h6>
+                        <h3 class="mb-0 text-success">¥@(Model.Where(o => o.ActualDeliveryTime.HasValue && o.ActualDeliveryTime.Value >= DateTime.Today && o.ActualDeliveryTime.Value < DateTime.Today.AddDays(1)).Sum(o => o.DeliveryFee).ToString("F2"))</h3>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted mb-2">本周收入</h6>
+                        @{ 
+                            var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                            var endOfWeek = startOfWeek.AddDays(7);
+                        }
+                        <h3 class="mb-0 text-success">¥@(Model.Where(o => o.ActualDeliveryTime.HasValue && o.ActualDeliveryTime.Value >= startOfWeek && o.ActualDeliveryTime.Value < endOfWeek).Sum(o => o.DeliveryFee).ToString("F2"))</h3>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted mb-2">本月收入</h6>
+                        @{
+                            var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                            var endOfMonth = startOfMonth.AddMonths(1);
+                        }
+                        <h3 class="mb-0 text-success">¥@(Model.Where(o => o.ActualDeliveryTime.HasValue && o.ActualDeliveryTime.Value >= startOfMonth && o.ActualDeliveryTime.Value < endOfMonth).Sum(o => o.DeliveryFee).ToString("F2"))</h3>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6 mb-3">
+                    <div class="border rounded p-3 text-center">
+                        <h6 class="text-muted mb-2">总收入</h6>
+                        <h3 class="mb-0 text-success">¥@(Model.Sum(o => o.DeliveryFee).ToString("F2"))</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function() {
+            // 如果需要添加交互功能，可以在这里编写JavaScript代码
+        });
+    </script>
+} 

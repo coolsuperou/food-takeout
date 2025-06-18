@@ -1,47 +1,173 @@
 @model IEnumerable<food_takeout.Models.Restaurant>
+@using food_takeout.Models
 
 @{
     ViewBag.Title = "餐厅列表";
+    var currentUserId = Session["UserId"] as int?;
+    var userType = Session["UserType"] as string;
+    var restaurants = Model ?? new List<Restaurant>();
 }
 
-<h2>餐厅列表</h2>
+<style>
+    .restaurant-card {
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .restaurant-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .restaurant-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .restaurant-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    .rating {
+        color: #ffc107;
+    }
+</style>
 
-@if (User.IsInRole("Admin"))
-{
-    <p>
-        @Html.ActionLink("创建新餐厅", "Create", null, new { @class = "btn btn-primary" })
-    </p>
-}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>餐厅列表</h2>
+        
+        @if (userType == UserTypes.Merchant)
+        {
+            <a href="@Url.Action("MyRestaurants", "Merchant")" class="btn btn-primary">
+                <i class="bi bi-shop me-1"></i> 我的餐厅
+            </a>
+        }
+    </div>
+    
+    <!-- 餐厅分类筛选 -->
+    <div class="mb-4">
+        <div class="btn-group" role="group" aria-label="餐厅分类">
+            <button type="button" class="btn btn-outline-primary active" data-category="all">全部</button>
+            <button type="button" class="btn btn-outline-primary" data-category="中餐">中餐</button>
+            <button type="button" class="btn btn-outline-primary" data-category="西餐">西餐</button>
+            <button type="button" class="btn btn-outline-primary" data-category="快餐">快餐</button>
+            <button type="button" class="btn btn-outline-primary" data-category="日料">日料</button>
+            <button type="button" class="btn btn-outline-primary" data-category="甜点">甜点</button>
+        </div>
+    </div>
 
-<div class="row">
-    @foreach (var item in Model)
-    {
-        <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card h-100">
-                <div style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+    <div class="row">
+        @foreach (var item in restaurants)
+        {
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card restaurant-card">
+                    <div class="restaurant-status @(item.IsActive ? "bg-success" : "bg-danger") text-white">
+                        @(item.IsActive ? "营业中" : "休息中")
+                    </div>
+                    @if (item.IsHot)
                     {
-                        <img src="@item.ImageUrl" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                        <div class="restaurant-badge">
+                            <span class="badge bg-danger">热门</span>
+                        </div>
                     }
-                    else
-                    {
-                        <img src="/Content/Images/restaurant-placeholder.jpg" alt="@item.Name" style="width: 100%; object-fit: cover;" />
-                    }
-                </div>
-                <div class="card-body">
-                    <h4 class="card-title">@item.Name</h4>
-                    <p class="card-text">@item.Location</p>
-                    <p>
-                        @Html.ActionLink("查看菜单", "Details", new { id = item.RestaurantId }, new { @class = "btn btn-info btn-sm" })
-                        @if (User.IsInRole("Admin"))
-                        {
-                            @Html.ActionLink("编辑", "Edit", new { id = item.RestaurantId }, new { @class = "btn btn-warning btn-sm" })
-                            @Html.ActionLink("删除", "Delete", new { id = item.RestaurantId }, new { @class = "btn btn-danger btn-sm" })
-                        }
-                    </p>
+                    <a href="@Url.Action("Details", new { id = item.RestaurantId })">
+                        <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "/Content/Images/Restaurants/default.jpg" : item.ImageUrl)" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Name</h5>
+                        <div class="rating mb-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(item.Rating))
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else if (i - 0.5 <= item.Rating)
+                                {
+                                    <i class="bi bi-star-half"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                            }
+                            <span class="ms-1">@item.Rating</span>
+                        </div>
+                        <p class="card-text">
+                            <small class="text-muted">@item.Categories</small><br>
+                            <small class="text-muted">@item.BusinessHours</small><br>
+                            <small class="text-muted">配送时间: @item.DeliveryTime 分钟</small><br>
+                            <small class="text-muted">地址: @item.Address</small>
+                        </p>
+                        <div class="d-grid">
+                            @if (userType == UserTypes.Customer)
+                            {
+                                <a href="@Url.Action("Details", new { id = item.RestaurantId })" class="btn btn-primary btn-sm">查看菜单</a>
+                            }
+                            else if (userType == UserTypes.Merchant && item.MerchantId == currentUserId)
+                            {
+                                <div class="btn-group">
+                                    <a href="@Url.Action("Edit", new { id = item.RestaurantId })" class="btn btn-sm btn-primary">编辑</a>
+                                    <a href="@Url.Action("ManageDishes", "Dishes", new { restaurantId = item.RestaurantId })" class="btn btn-sm btn-success">管理菜品</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Details", new { id = item.RestaurantId })" class="btn btn-primary btn-sm">查看菜单</a>
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
+    </div>
+
+    @if (!restaurants.Any())
+    {
+        <div class="alert alert-info">暂无餐厅数据</div>
     }
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 分类筛选功能
+        const categoryButtons = document.querySelectorAll('[data-category]');
+        const restaurantCards = document.querySelectorAll('.restaurant-card');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按钮的active类
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                // 添加当前按钮的active类
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                
+                // 如果是"全部"分类，显示所有餐厅
+                if (category === 'all') {
+                    restaurantCards.forEach(card => {
+                        card.parentElement.style.display = 'block';
+                    });
+                    return;
+                }
+                
+                // 否则根据分类筛选
+                restaurantCards.forEach(card => {
+                    const categories = card.querySelector('.text-muted').textContent;
+                    if (categories.includes(category)) {
+                        card.parentElement.style.display = 'block';
+                    } else {
+                        card.parentElement.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
  

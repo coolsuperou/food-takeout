@@ -1,0 +1,228 @@
+@{
+    ViewBag.Title = "订单详情";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    var order = ViewBag.Order as food_takeout.Models.Order;
+    var merchantRevenue = ViewBag.MerchantRevenue ?? 0m;
+    var errorMessage = ViewBag.ErrorMessage as string;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12 px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="bi bi-receipt"></i> 订单详情</h2>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="@Url.Action("Revenue")" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回测试页面
+                    </a>
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    <h5>错误信息</h5>
+                    <p>@errorMessage</p>
+                    
+                    @if (errorMessage.Contains("请先登录"))
+                    {
+                        <div class="mt-3">
+                            <a href="@Url.Action("Login", "Account", new { returnUrl = "/Test/Revenue" })" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> 去登录
+                            </a>
+                        </div>
+                    }
+                </div>
+                return;
+            }
+            
+            @if (order == null)
+            {
+                <div class="alert alert-warning">
+                    <h5>找不到订单</h5>
+                    <p>请检查订单ID是否正确</p>
+                </div>
+                return;
+            }
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">订单基本信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th style="width: 150px;">订单ID:</th>
+                                    <td>@order.OrderId</td>
+                                </tr>
+                                <tr>
+                                    <th>订单号:</th>
+                                    <td>@order.OrderNumber</td>
+                                </tr>
+                                <tr>
+                                    <th>订单状态:</th>
+                                    <td>
+                                        @order.Status
+                                        <span class="text-muted">(@order.StatusInfo)</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>创建时间:</th>
+                                    <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                </tr>
+                                <tr>
+                                    <th>更新时间:</th>
+                                    <td>@(order.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "未更新")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th style="width: 150px;">顾客:</th>
+                                    <td>@(order.Customer?.Name ?? order.Customer?.Username ?? "未知顾客")</td>
+                                </tr>
+                                <tr>
+                                    <th>餐厅:</th>
+                                    <td>@(order.Restaurant?.Name ?? "未知餐厅")</td>
+                                </tr>
+                                <tr>
+                                    <th>骑手:</th>
+                                    <td>@(order.Rider?.Name ?? "未分配")</td>
+                                </tr>
+                                <tr>
+                                    <th>配送地址:</th>
+                                    <td>@order.DeliveryAddress</td>
+                                </tr>
+                                <tr>
+                                    <th>备注:</th>
+                                    <td>@(string.IsNullOrEmpty(order.Remark) ? "无" : order.Remark)</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">订单金额信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h5>商家收入计算</h5>
+                                <p>总金额: ¥@order.TotalAmount.ToString("F2") - 配送费: ¥@order.DeliveryFee.ToString("F2") = <strong>¥@merchantRevenue.ToString("F2")</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr class="table-light">
+                                    <th>订单总额:</th>
+                                    <td class="text-end">¥@order.TotalAmount.ToString("F2")</td>
+                                </tr>
+                                <tr>
+                                    <th>配送费:</th>
+                                    <td class="text-end">¥@order.DeliveryFee.ToString("F2")</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <th>商家收入:</th>
+                                    <td class="text-end fw-bold">¥@merchantRevenue.ToString("F2")</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">订单明细</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>菜品ID</th>
+                                    <th>菜品名称</th>
+                                    <th>单价</th>
+                                    <th>数量</th>
+                                    <th>小计</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (order.OrderDetails != null && order.OrderDetails.Any())
+                                {
+                                    foreach (var detail in order.OrderDetails)
+                                    {
+                                        <tr>
+                                            <td>@detail.DishId</td>
+                                            <td>@(detail.Dish?.Name ?? "未知菜品")</td>
+                                            <td>¥@detail.Price.ToString("F2")</td>
+                                            <td>@detail.Quantity</td>
+                                            <td class="text-end">¥@detail.Subtotal.ToString("F2")</td>
+                                        </tr>
+                                    }
+                                    <tr class="table-light">
+                                        <th colspan="4" class="text-end">商品小计:</th>
+                                        <td class="text-end">¥@order.OrderDetails.Sum(d => d.Subtotal).ToString("F2")</td>
+                                    </tr>
+                                    <tr>
+                                        <th colspan="4" class="text-end">配送费:</th>
+                                        <td class="text-end">¥@order.DeliveryFee.ToString("F2")</td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <th colspan="4" class="text-end">订单总计:</th>
+                                        <td class="text-end fw-bold">¥@order.TotalAmount.ToString("F2")</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center">无订单明细</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">订单时间线</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <i class="bi bi-calendar-plus"></i> 下单时间: @order.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                        </li>
+                        @if (order.AcceptedTime.HasValue)
+                        {
+                            <li class="list-group-item">
+                                <i class="bi bi-check-circle"></i> 接单时间: @order.AcceptedTime.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                            </li>
+                        }
+                        @if (order.DeliveryStartTime.HasValue)
+                        {
+                            <li class="list-group-item">
+                                <i class="bi bi-bicycle"></i> 开始配送时间: @order.DeliveryStartTime.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                            </li>
+                        }
+                        @if (order.ActualDeliveryTime.HasValue)
+                        {
+                            <li class="list-group-item">
+                                <i class="bi bi-check2-all"></i> 送达时间: @order.ActualDeliveryTime.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

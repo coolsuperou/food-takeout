@@ -1,44 +1,50 @@
 @model IEnumerable<food_takeout.Models.Dish>
+@using food_takeout.Models
 
 @{
     ViewBag.Title = "菜品列表";
 }
 
-<h2>菜品列表</h2>
+<div class="container">
+    <h2>菜品列表</h2>
 
-<p>
-    @Html.ActionLink("创建新菜品", "Create", null, new { @class = "btn btn-primary" })
-</p>
-
-<div class="row">
-    @foreach (var item in Model)
-    {
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                @if (!string.IsNullOrEmpty(item.ImageUrl))
-                {
-                    <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
-                }
-                else
-                {
-                    <div class="card-img-top bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
-                        <span class="text-muted">暂无图片</span>
-                    </div>
-                }
-                <div class="card-body">
-                    <h5 class="card-title">@item.Name</h5>
-                    <p class="card-text">
-                        <strong>价格: </strong>¥@item.Price.ToString("F2")<br />
-                        <strong>餐厅: </strong>@item.Restaurant.Name<br />
-                        <strong>状态: </strong>@(item.IsAvailable ? "可购买" : "已下架")
-                    </p>
-                    <div class="btn-group">
-                        @Html.ActionLink("详情", "Details", new { id = item.DishId }, new { @class = "btn btn-info btn-sm" })
-                        @Html.ActionLink("编辑", "Edit", new { id = item.DishId }, new { @class = "btn btn-primary btn-sm" })
-                        @Html.ActionLink("删除", "Delete", new { id = item.DishId }, new { @class = "btn btn-danger btn-sm" })
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <img src="~/Images/default-dish.jpg" class="card-img-top" alt="默认图片" style="height: 200px; object-fit: cover;">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@item.Name</h5>
+                        <p class="card-text text-danger">¥@item.Price.ToString("F2")</p>
+                        <button class="btn btn-primary add-to-cart" data-dish-id="@item.Id">加入购物车</button>
                     </div>
                 </div>
             </div>
-        </div>
-    }
-</div> 
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('.add-to-cart').click(function () {
+                var dishId = $(this).data('dish-id');
+                $.post('/Cart/AddToCart', { dishId: dishId }, function (result) {
+                    if (result.success) {
+                        alert('已添加到购物车');
+                    } else {
+                        alert(result.message || '添加失败');
+                    }
+                });
+            });
+        });
+    </script>
+} 

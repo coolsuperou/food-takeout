@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美味快送 - 订单管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7f7f7;
+            --accent-color: #6c5ce7;
+            --warning-color: #ffd166;
+            --success-color: #06d6a0;
+            --danger-color: #ef476f;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .sidebar {
+            background-color: white;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            padding-top: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .sidebar-link i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .section-header {
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--secondary-color);
+        }
+        .order-card {
+            position: relative;
+            overflow: hidden;
+        }
+        .order-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .order-status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-pending {
+            background-color: var(--warning-color);
+        }
+        .status-processing {
+            background-color: var(--accent-color);
+        }
+        .status-delivering {
+            background-color: var(--secondary-color);
+        }
+        .status-completed {
+            background-color: var(--success-color);
+        }
+        .status-cancelled {
+            background-color: var(--danger-color);
+        }
+        .order-filter {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .order-filter::-webkit-scrollbar {
+            height: 4px;
+        }
+        .order-filter::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+        }
+        .order-filter .btn {
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -30px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+        }
+        .timeline-marker.completed {
+            background-color: var(--success-color);
+        }
+        .timeline-marker.pending {
+            background-color: #e9ecef;
+            border: 2px solid var(--secondary-color);
+        }
+        .stats-card {
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .stats-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0;
+        }
+        .stats-card p {
+            margin-bottom: 0;
+            opacity: 0.8;
+        }
+        .stats-card.pending {
+            background: linear-gradient(135deg, #ffd166, #ffb347);
+        }
+        .stats-card.processing {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+        .stats-card.completed {
+            background: linear-gradient(135deg, #06d6a0, #1dd1a1);
+        }
+        .stats-card.cancelled {
+            background: linear-gradient(135deg, #ef476f, #ff6b6b);
+        }
+        .stats-card .icon {
+            font-size: 2.5rem;
+            opacity: 0.2;
+            position: absolute;
+            right: 15px;
+            top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边导航栏 -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="text-center mb-4">
+                    <img src="https://via.placeholder.com/80" alt="餐厅Logo" class="img-fluid rounded-circle mb-2" width="80">
+                    <h5>川湘菜馆</h5>
+                    <span class="badge bg-success">营业中</span>
+                </div>
+                <div class="px-3">
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-speedometer2"></i> 仪表盘
+                    </a>
+                    <a href="#" class="sidebar-link active">
+                        <i class="bi bi-receipt"></i> 订单管理
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-menu-button-wide"></i> 菜品管理
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-graph-up"></i> 数据统计
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-gear"></i> 店铺设置
+                    </a>
+                    <hr>
+                    <a href="#" class="sidebar-link text-danger">
+                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </a>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h2><i class="bi bi-receipt"></i> 订单管理</h2>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-printer"></i> 打印报表
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-download"></i> 导出数据
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+                            <i class="bi bi-calendar3"></i> 今日
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 订单统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card pending position-relative">
+                            <div class="icon"><i class="bi bi-hourglass-split"></i></div>
+                            <h3>12</h3>
+                            <p>待处理订单</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card processing position-relative">
+                            <div class="icon"><i class="bi bi-gear"></i></div>
+                            <h3>8</h3>
+                            <p>处理中订单</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card completed position-relative">
+                            <div class="icon"><i class="bi bi-check-circle"></i></div>
+                            <h3>45</h3>
+                            <p>已完成订单</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card cancelled position-relative">
+                            <div class="icon"><i class="bi bi-x-circle"></i></div>
+                            <h3>3</h3>
+                            <p>已取消订单</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 筛选区域 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="searchOrder" placeholder="搜索订单号/顾客">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="order-filter">
+                                    <button class="btn btn-secondary filter-btn" data-status="all">全部</button>
+                                    <button class="btn btn-outline-secondary filter-btn" data-status="pending">待处理</button>
+                                    <button class="btn btn-outline-secondary filter-btn" data-status="processing">处理中</button>
+                                    <button class="btn btn-outline-secondary filter-btn" data-status="delivering">配送中</button>
+                                    <button class="btn btn-outline-secondary filter-btn" data-status="completed">已完成</button>
+                                    <button class="btn btn-outline-secondary filter-btn" data-status="cancelled">已取消</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 订单列表 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">今日订单</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>订单号</th>
+                                        <th>顾客</th>
+                                        <th>金额</th>
+                                        <th>订单时间</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="order-item" data-status="pending">
+                                        <td><strong>#ORD-2023112501</strong></td>
+                                        <td>张先生 (138****1234)</td>
+                                        <td>¥108.00</td>
+                                        <td>今天 10:26</td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">
+                                                <span class="order-status-icon status-pending"></span> 待处理
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                            <button class="btn btn-sm btn-success me-1">接单</button>
+                                            <button class="btn btn-sm btn-danger">拒绝</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-item" data-status="pending">
+                                        <td><strong>#ORD-2023112502</strong></td>
+                                        <td>李女士 (139****5678)</td>
+                                        <td>¥56.00</td>
+                                        <td>今天 10:42</td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark">
+                                                <span class="order-status-icon status-pending"></span> 待处理
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                            <button class="btn btn-sm btn-success me-1">接单</button>
+                                            <button class="btn btn-sm btn-danger">拒绝</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-item" data-status="processing">
+                                        <td><strong>#ORD-2023112498</strong></td>
+                                        <td>赵女士 (137****9012)</td>
+                                        <td>¥86.00</td>
+                                        <td>今天 09:46</td>
+                                        <td>
+                                            <span class="badge bg-primary">
+                                                <span class="order-status-icon status-processing"></span> 制作中
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                            <button class="btn btn-sm btn-secondary">已出餐</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-item" data-status="delivering">
+                                        <td><strong>#ORD-2023112495</strong></td>
+                                        <td>王先生 (136****3456)</td>
+                                        <td>¥92.00</td>
+                                        <td>今天 09:15</td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <span class="order-status-icon status-delivering"></span> 配送中
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                            <button class="btn btn-sm btn-outline-primary">追踪</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-item" data-status="completed">
+                                        <td><strong>#ORD-2023112490</strong></td>
+                                        <td>刘先生 (135****7890)</td>
+                                        <td>¥78.00</td>
+                                        <td>今天 08:30</td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <span class="order-status-icon status-completed"></span> 已完成
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-item" data-status="cancelled">
+                                        <td><strong>#ORD-2023112488</strong></td>
+                                        <td>陈女士 (134****2345)</td>
+                                        <td>¥45.00</td>
+                                        <td>今天 08:05</td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                <span class="order-status-icon status-cancelled"></span> 已取消
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#orderDetailModal">查看</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">上一页</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">下一页</a>
+                        </li>
+                    </ul>
+                </nav>
+            </main>
+        </div>
+    </div>
+
+    <!-- 订单详情模态框 -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">订单详情 #ORD-2023112501</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">顾客信息</h6>
+                            <p class="mb-1"><strong>姓名：</strong>张先生</p>
+                            <p class="mb-1"><strong>电话：</strong>138****1234</p>
+                            <p class="mb-3"><strong>地址：</strong>北京市朝阳区建国路88号公寓 3号楼 2单元 502室</p>
+                            <p class="mb-1"><strong>备注：</strong>不要放辣椒，送餐时电话联系</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">订单信息</h6>
+                            <p class="mb-1"><strong>订单号：</strong>#ORD-2023112501</p>
+                            <p class="mb-1"><strong>下单时间：</strong>2023-11-25 10:26:35</p>
+                            <p class="mb-1"><strong>支付方式：</strong>微信支付</p>
+                            <p class="mb-1"><strong>配送方式：</strong>商家配送</p>
+                            <p class="mb-1">
+                                <strong>订单状态：</strong>
+                                <span class="badge bg-warning text-dark">待处理</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>菜品</th>
+                                    <th>单价</th>
+                                    <th>数量</th>
+                                    <th>小计</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>水煮鱼片</td>
+                                    <td>¥58.00</td>
+                                    <td>1</td>
+                                    <td>¥58.00</td>
+                                </tr>
+                                <tr>
+                                    <td>麻婆豆腐</td>
+                                    <td>¥28.00</td>
+                                    <td>1</td>
+                                    <td>¥28.00</td>
+                                </tr>
+                                <tr>
+                                    <td>米饭</td>
+                                    <td>¥4.00</td>
+                                    <td>2</td>
+                                    <td>¥8.00</td>
+                                </tr>
+                                <tr>
+                                    <td>可乐</td>
+                                    <td>¥7.00</td>
+                                    <td>2</td>
+                                    <td>¥14.00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>小计：</strong></td>
+                                    <td>¥108.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>配送费：</strong></td>
+                                    <td>¥5.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>优惠：</strong></td>
+                                    <td>-¥5.00</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>总计：</strong></td>
+                                    <td><strong class="text-danger">¥108.00</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-muted mb-3">订单进度</h6>
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <div class="timeline-marker completed">
+                                        <i class="bi bi-check"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">订单已提交</h6>
+                                        <p class="text-muted small mb-0">2023-11-25 10:26:35</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker pending">
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">商家接单</h6>
+                                        <p class="text-muted small mb-0">等待中</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker pending">
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">制作完成</h6>
+                                        <p class="text-muted small mb-0">等待中</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker pending">
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">配送中</h6>
+                                        <p class="text-muted small mb-0">等待中</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker pending">
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-0">订单完成</h6>
+                                        <p class="text-muted small mb-0">等待中</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-danger me-2">拒绝订单</button>
+                    <button type="button" class="btn btn-success">接受订单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 订单筛选功能
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const orderItems = document.querySelectorAll('.order-item');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 更新按钮样式
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('btn-secondary');
+                        btn.classList.add('btn-outline-secondary');
+                    });
+                    button.classList.remove('btn-outline-secondary');
+                    button.classList.add('btn-secondary');
+                    
+                    // 筛选订单
+                    const status = button.getAttribute('data-status');
+                    orderItems.forEach(item => {
+                        if (status === 'all' || item.getAttribute('data-status') === status) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // 搜索功能
+            const searchInput = document.getElementById('searchOrder');
+            searchInput.addEventListener('keyup', () => {
+                const searchValue = searchInput.value.toLowerCase();
+                orderItems.forEach(item => {
+                    const orderText = item.textContent.toLowerCase();
+                    if (orderText.includes(searchValue)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+@model food_takeout.Models.Restaurant
+
+@{
+    ViewBag.Title = "创建餐厅";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>创建新餐厅</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">餐厅信息</div>
+            <div class="panel-body">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="Name">餐厅名称</label>
+                        <input type="text" class="form-control" id="Name" name="Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="PhoneNumber">联系电话</label>
+                        <input type="text" class="form-control" id="PhoneNumber" name="PhoneNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Address">餐厅地址</label>
+                        <input type="text" class="form-control" id="Address" name="Address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="Description">餐厅描述</label>
+                        <textarea class="form-control" id="Description" name="Description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="Category">餐厅类型</label>
+                        <input type="text" class="form-control" id="Category" name="Category">
+                    </div>
+                    <div class="form-group">
+                        <label for="BusinessHours">营业时间</label>
+                        <input type="text" class="form-control" id="BusinessHours" name="BusinessHours" placeholder="例如：09:00-22:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="imageFile">餐厅图片</label>
+                        <input type="file" class="form-control" id="imageFile" name="imageFile">
+                    </div>
+                    <hr />
+                    <button type="submit" class="btn btn-primary">创建餐厅</button>
+                    <a href="@Url.Action("MyRestaurants")" class="btn btn-default">返回</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+            // 实时预览图片
+            $("#imageFile").change(function () {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#imagePreview').attr('src', e.target.result).show();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+    </script>
+} 

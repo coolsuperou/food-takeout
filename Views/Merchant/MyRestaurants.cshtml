@@ -1,0 +1,84 @@
+@model IEnumerable<food_takeout.Models.Restaurant>
+@{
+    ViewBag.Title = "我的餐厅";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    bool hasRestaurant = ViewBag.HasRestaurant != null && (bool)ViewBag.HasRestaurant;
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>我的餐厅</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            @if (!hasRestaurant)
+            {
+                <a href="@Url.Action("CreateRestaurant", "Merchant")" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> 创建新餐厅
+            </a>
+            }
+            else
+            {
+                <span class="text-muted"><i class="bi bi-info-circle"></i> 每个商家只能创建一个餐厅</span>
+            }
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var restaurant in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="@(string.IsNullOrEmpty(restaurant.ImageUrl) ? "/Content/Images/Restaurants/default.jpg" : restaurant.ImageUrl)" 
+                             class="card-img-top" alt="@restaurant.Name" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">@restaurant.Name</h5>
+                            <p class="card-text">
+                                <small class="text-muted">分类: @(string.IsNullOrEmpty(restaurant.Category) ? "未分类" : restaurant.Category)</small><br>
+                                <small class="text-muted">地址: @restaurant.Address</small><br>
+                                <small class="text-muted">评分: @restaurant.Rating</small><br>
+                                <small class="text-muted">状态: @(restaurant.IsActive ? "营业中" : "已关闭")</small>
+                            </p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="d-flex justify-content-between">
+                                <a href="@Url.Action("RestaurantSettings", "Merchant", new { id = restaurant.RestaurantId })" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-gear"></i> 店铺设置
+                                </a>
+                                <a href="@Url.Action("ManageDishes", "Dishes", new { restaurantId = restaurant.RestaurantId })" class="btn btn-sm btn-success">
+                                    <i class="bi bi-card-list"></i> 管理菜品
+                                </a>
+                                <a href="@Url.Action("MerchantOrders", "Orders", new { restaurantId = restaurant.RestaurantId })" class="btn btn-sm btn-info">
+                                    <i class="bi bi-receipt"></i> 订单
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 您还没有创建任何餐厅。点击上方"创建新餐厅"按钮开始添加。
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success mt-3">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+</div> 

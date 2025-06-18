@@ -1,0 +1,1065 @@
+@using food_takeout.Models
+@{
+    ViewBag.Title = "商家中心";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    // 定义全局变量
+    var pendingOrders = ViewBag.PendingOrders as List<Order> ?? new List<Order>();
+    var hotDishes = ViewBag.HotDishes as List<Dish> ?? new List<Dish>();
+    
+    // 创建默认的餐厅对象，避免直接访问ViewBag.Restaurant
+    var restaurant = new {
+        Id = 0,
+        RestaurantId = 0, // 添加RestaurantId属性
+        Name = "请创建餐厅",
+        OpeningHours = "未设置", 
+        IsActive = false, // 使用IsActive而不是Status
+        Logo = "/Content/Images/restaurant-placeholder.jpg"
+    };
+    
+    // 如果ViewBag.Restaurant不为空，尝试获取其属性
+    if (ViewBag.Restaurant != null)
+    {
+        try
+        {
+            dynamic restObj = ViewBag.Restaurant;
+            // 使用dynamic类型接收ViewBag.Restaurant的属性，避免类型转换问题
+            restaurant = new {
+                Id = (int)restObj.RestaurantId,
+                RestaurantId = (int)restObj.RestaurantId, // 使用RestaurantId
+                Name = (string)restObj.Name,
+                OpeningHours = (string)restObj.OpeningHours,
+                IsActive = (bool)restObj.IsActive, // 使用IsActive而不是Status
+                Logo = (string)restObj.Logo
+            };
+            
+            // 调试输出Logo路径
+            System.Diagnostics.Debug.WriteLine($"视图中接收到的Logo路径: {restaurant.Logo}");
+            
+            // 将餐厅状态保存到Session中，确保整个网站同步
+            Session["RestaurantStatus"] = restaurant.IsActive;
+        }
+        catch (Exception ex)
+        {
+            // 如果获取属性失败，保留默认值
+            System.Diagnostics.Debug.WriteLine($"获取Restaurant属性失败: {ex.Message}");
+        }
+    }
+    else
+    {
+        System.Diagnostics.Debug.WriteLine("警告: ViewBag.Restaurant为null");
+        
+        // 尝试从Session中获取餐厅状态
+        if (Session["RestaurantStatus"] != null)
+        {
+            var tempRestaurant = restaurant;
+            restaurant = new {
+                Id = tempRestaurant.Id,
+                RestaurantId = tempRestaurant.RestaurantId,
+                Name = tempRestaurant.Name,
+                OpeningHours = tempRestaurant.OpeningHours,
+                IsActive = (bool)Session["RestaurantStatus"],
+                Logo = tempRestaurant.Logo
+            };
+        }
+    }
+    
+    // 确保待处理订单列表有效
+    bool hasPendingOrders = pendingOrders != null && pendingOrders.Any();
+    
+    // 安全处理热销菜品
+    bool hasHotDishes = hotDishes != null && hotDishes.Any();
+    
+    // 初始化数据，确保即使没有数据也能显示
+    var todayOrdersCount = ViewBag.TodayOrdersCount ?? 0;
+    var yesterdayOrdersCount = ViewBag.YesterdayOrdersCount ?? 0;
+    var todayRevenue = ViewBag.TodayRevenue ?? 0.0m;
+    var yesterdayRevenue = ViewBag.YesterdayRevenue ?? 0.0m;
+    var ordersPercentage = ViewBag.OrdersPercentage ?? 0.0;
+    var revenuePercentage = ViewBag.RevenuePercentage ?? 0.0;
+    var totalRevenue = ViewBag.TotalRevenue ?? 0.0m;
+    var totalOrdersCount = ViewBag.TotalOrdersCount ?? 0;
+    var oldestPendingOrderTime = ViewBag.OldestPendingOrderTime ?? DateTime.Now.ToString("HH:mm");
+}
+
+<!-- 在页面开头放置CSRF令牌，确保它可被JavaScript访问 -->
+@Html.AntiForgeryToken()
+
+<style>
+    :root {
+        --primary-color: #ff6b6b;
+        --secondary-color: #4ecdc4;
+        --dark-color: #292f36;
+        --light-color: #f7f7f7;
+        --accent-color: #6c5ce7;
+    }
+    body {
+        font-family: 'Microsoft YaHei', sans-serif;
+        color: var(--dark-color);
+        background-color: var(--light-color);
+    }
+    .navbar {
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .btn-primary:hover {
+        background-color: #ff5252;
+        border-color: #ff5252;
+    }
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+    }
+    .dashboard-card {
+        height: 100%;
+        transition: all 0.3s;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .dashboard-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .merchant-header {
+        background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .stats-icon {
+        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: white;
+    }
+    .bg-primary-light {
+        background-color: rgba(255, 107, 107, 0.2);
+        color: var(--primary-color);
+    }
+    .bg-secondary-light {
+        background-color: rgba(78, 205, 196, 0.2);
+        color: var(--secondary-color);
+    }
+    .bg-accent-light {
+        background-color: rgba(108, 92, 231, 0.2);
+        color: var(--accent-color);
+    }
+    .section-header {
+        margin-bottom: 25px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    .section-header:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: var(--secondary-color);
+    }
+    .sidebar {
+        background-color: white;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        padding-top: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        color: var(--dark-color);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+        background-color: var(--secondary-color);
+        color: white;
+    }
+    .sidebar-link i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+    }
+    .menu-item-card {
+        position: relative;
+    }
+    .menu-item-img {
+        height: 120px;
+        object-fit: cover;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .menu-item-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .chart-container {
+        height: 300px;
+    }
+    .order-table th, .order-table td {
+        vertical-align: middle;
+    }
+    #salesChart, #categoryChart {
+        width: 100%;
+        height: 300px;
+    }
+    .status-btn {
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        font-weight: bold;
+    }
+    
+    .status-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    }
+    
+    .status-btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .status-btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .status-badge {
+        font-size: 1rem;
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+
+<!-- 显示消息区域 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- 紧急功能区 -->
+<div class="alert @(restaurant.IsActive ? "alert-success" : "alert-warning") border-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong class="fs-5">餐厅状态: <span id="restaurantStatusBadge" class="badge @(restaurant.IsActive ? "bg-success" : "bg-danger") status-badge">@(restaurant.IsActive ? "营业中" : "休息中")</span></strong>
+            <p class="mb-0 mt-2">从休息中切换到营业中时，将自动接受所有待处理订单</p>
+        </div>
+        <div>
+            <a href="@Url.Action("FixRestaurantStatus", "Merchant")" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-clockwise"></i> 刷新状态
+            </a>
+            <a href="@Url.Action("ToggleActiveAndAcceptOrdersGet", "Merchant")" 
+               id="toggleStatusBtn"
+               class="btn @(restaurant.IsActive ? "status-btn-danger" : "status-btn-success") status-btn btn-lg px-4 py-3">
+                <i class="bi @(restaurant.IsActive ? "bi-power" : "bi-shop") me-2"></i> 
+                <span id="toggleStatusBtnText">@(restaurant.IsActive ? "暂停营业" : "开始营业并自动接单")</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- 侧边导航栏 -->
+        <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <div class="px-3 mt-4">
+                <a href="@Url.Action("Dashboard", "Merchant")" class="sidebar-link active">
+                    <i class="bi bi-speedometer2"></i> 仪表盘
+                </a>
+                <a href="@Url.Action("MerchantOrders", "Orders")" class="sidebar-link">
+                    <i class="bi bi-receipt"></i> 订单管理
+                </a>
+                <a href="@Url.Action("ManageDishes", "Dishes")" class="sidebar-link">
+                    <i class="bi bi-menu-button-wide"></i> 菜品管理
+                </a>
+                <a href="@Url.Action("SalesStatistics", "Orders")" class="sidebar-link">
+                    <i class="bi bi-graph-up"></i> 数据统计
+                </a>
+                <a href="@Url.Action("RestaurantSettings", "Merchant", new { id = restaurant.RestaurantId })" class="sidebar-link">
+                    <i class="bi bi-gear"></i> 店铺设置
+                </a>
+                <hr>
+                <a href="@Url.Action("Logout", "Account")" class="sidebar-link text-danger">
+                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                </a>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <!-- 今日数据概览 -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> 今日经营概览</h5>
+                        <a href="@Url.Action("RefreshRevenue", "Merchant")" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-4 border-end">
+                                <div class="stats-icon bg-primary-light mx-auto mb-3">
+                                    <i class="bi bi-receipt"></i>
+                                </div>
+                                <h2 class="display-5 fw-bold text-primary">@(ViewBag.TodayOrdersCount ?? 0)</h2>
+                                <h5 class="text-muted">今日订单数</h5>
+                                <p class="@((ViewBag.OrdersPercentage != null && (double)ViewBag.OrdersPercentage > 0) ? "text-success" : "text-danger") mb-0">
+                                    <i class="bi @((ViewBag.OrdersPercentage != null && (double)ViewBag.OrdersPercentage > 0) ? "bi-arrow-up" : "bi-arrow-down")"></i> 
+                                    较昨日 @((ViewBag.OrdersPercentage != null && (double)ViewBag.OrdersPercentage > 0) ? "+" : "")@(ViewBag.OrdersPercentage ?? 0)%
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-4 border-end">
+                                <div class="stats-icon bg-secondary-light mx-auto mb-3">
+                                    <i class="bi bi-cash-coin"></i>
+                                </div>
+                                <h2 class="display-5 fw-bold text-success">¥@((ViewBag.TotalRevenue ?? 0).ToString("F2"))</h2>
+                                <h5 class="text-muted">总营收</h5>
+                                <small class="text-muted">(不含配送费)</small>
+                                <p class="@((ViewBag.TodayRevenue != null && (decimal)ViewBag.TodayRevenue > 0) ? "text-success" : "text-muted") mb-0">
+                                    <i class="bi @((ViewBag.TodayRevenue != null && (decimal)ViewBag.TodayRevenue > 0) ? "bi-arrow-up" : "bi-dash")"></i> 
+                                    今日增长 ¥@((ViewBag.TodayRevenue ?? 0).ToString("F2"))
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-4">
+                                <div class="stats-icon bg-accent-light mx-auto mb-3">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </div>
+                                <h2 class="display-5 fw-bold text-danger">@(ViewBag.PendingOrdersCount ?? 0)</h2>
+                                <h5 class="text-muted">待处理订单</h5>
+                                <p class="text-danger mb-0">
+                                    <i class="bi bi-clock"></i> 最早下单于 @(ViewBag.OldestPendingOrderTime ?? DateTime.Now.ToString("HH:mm"))
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+      
+
+            <!-- 销售统计图表 -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="section-header">销售统计</h4>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <span id="chartTitle">近7天营业额</span>
+                                <div class="btn-group ms-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn active" data-type="revenue">营业额</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn" data-type="orders">订单量</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn" data-type="dishes">菜品销量</button>
+                                </div>
+                            </h6>
+                            <div>
+                                <div class="dropdown d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="customRangeBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        自定义
+                                    </button>
+                                    <div class="dropdown-menu p-2" aria-labelledby="customRangeBtn">
+                                        <div class="mb-2">
+                                            <label for="customDaysInput" class="form-label small">天数</label>
+                                            <input type="number" class="form-control form-control-sm" id="customDaysInput" min="1" max="365" value="15">
+                                        </div>
+                                        <button class="btn btn-sm btn-primary w-100" id="applyCustomRange">应用</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="salesChart"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">热销品类占比</h6>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary pie-type-btn active" data-type="category">品类</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary pie-type-btn" data-type="dish">菜品</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="categoryChart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 热销菜品 -->
+            <div class="mb-4">
+                <h4 class="section-header">热销菜品</h4>
+                <div class="row">
+                    @if (hotDishes != null && hotDishes.Any())
+                    {
+                        foreach (var dish in hotDishes)
+                        {
+                            <div class="col-md-3 col-6">
+                                <div class="card menu-item-card">
+                                    <span class="badge bg-danger menu-item-badge">热销</span>
+                                    
+                                    <img src="@(string.IsNullOrEmpty(dish.ImageUrl) ? "/Content/Images/placeholders/300x200/dish.png" : dish.ImageUrl)" class="card-img-top menu-item-img" alt="@dish.Name">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="card-title mb-0">@dish.Name</h6>
+                                            <span class="text-danger">¥@dish.Price.ToString("F2")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small class="text-muted">今日售出: @(new Random().Next(5, 50)) 份</small>
+                                            <a href="@Url.Action("Edit", "Dishes", new { id = dish.DishId })" class="btn btn-sm btn-outline-secondary">编辑</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                暂无热销菜品数据
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="text-center mt-3">
+                    <a href="@Url.Action("ManageDishes", "Dishes")" class="btn btn-outline-primary">菜品管理 <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </main>
+    </div>
+</div> @section scripts {
+    <!-- 调试信息输出 -->
+    <script>
+        // 全局餐厅ID变量
+        var globalRestaurantId = @restaurant.RestaurantId;
+        
+        $(document).ready(function() {
+            // 绑定订单操作按钮事件
+            // 处理接单按钮点击
+            $('.accept-order-btn').off('click').click(function(e) {
+                e.preventDefault();
+                var orderId = $(this).data('order-id');
+                
+                if (confirm('确定要接受此订单吗？')) {
+                    $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                    $(this).prop('disabled', true);
+                    
+                    $.ajax({
+                        url: '@Url.Action("AcceptOrderGet", "Orders")/' + orderId,
+                        type: 'GET',
+                        success: function(result) {
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('操作失败，请重试: ' + error);
+                            $('.accept-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-check-lg"></i> 接单');
+                            $('.accept-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                        }
+                    });
+                }
+            });
+            
+            // 处理拒绝订单按钮点击
+            $('.reject-order-btn').off('click').click(function(e) {
+                e.preventDefault();
+                var orderId = $(this).data('order-id');
+                
+                if (confirm('确定要拒绝此订单吗？')) {
+                    $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                    $(this).prop('disabled', true);
+                    
+                    $.ajax({
+                        url: '@Url.Action("RejectOrderGet", "Orders")/' + orderId,
+                        type: 'GET',
+                        success: function(result) {
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('操作失败，请重试: ' + error);
+                            $('.reject-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-x-lg"></i> 拒单');
+                            $('.reject-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                        }
+                    });
+                }
+            });
+            
+            // 处理标记已出餐按钮点击
+            $('.mark-ready-btn').off('click').click(function(e) {
+                e.preventDefault();
+                var orderId = $(this).data('order-id');
+                
+                if (confirm('确定要将此订单标记为已出餐吗？')) {
+                    $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                    $(this).prop('disabled', true);
+                    
+                    $.ajax({
+                        url: '@Url.Action("MarkAsReadyGet", "Orders")/' + orderId,
+                        type: 'GET',
+                        success: function(result) {
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('操作失败，请重试: ' + error);
+                            $('.mark-ready-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-box-seam"></i> 已出餐');
+                            $('.mark-ready-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                        }
+                    });
+                }
+            });
+            
+            // 处理取消订单按钮点击
+            $('.cancel-order-btn').off('click').click(function(e) {
+                e.preventDefault();
+                var orderId = $(this).data('order-id');
+                
+                if (confirm('确定要取消此订单吗？此操作不可恢复！')) {
+                    $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                    $(this).prop('disabled', true);
+                    
+                    $.ajax({
+                        url: '@Url.Action("CancelOrderGet", "Orders")/' + orderId,
+                        type: 'GET',
+                        success: function(result) {
+                            location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            alert('操作失败，请重试: ' + error);
+                            $('.cancel-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-x-circle"></i> 取消');
+                            $('.cancel-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                        }
+                    });
+                }
+            });
+        
+            // 输出调试信息
+            console.log("页面加载完成，输出调试信息:");
+            console.log("餐厅ID(Id):", @restaurant.Id);
+            console.log("餐厅ID(RestaurantId):", @restaurant.RestaurantId);
+            console.log("全局餐厅ID:", globalRestaurantId);
+            console.log("餐厅名称:", "@restaurant.Name");
+            console.log("营业状态:", @(restaurant.IsActive ? "true" : "false"));
+            
+            // 验证CSRF令牌
+            var token = $('input[name="__RequestVerificationToken"]:first').val();
+            console.log("CSRF令牌状态:", token ? "存在" : "缺失");
+            
+            // 同步餐厅状态
+            var isActive = @(restaurant.IsActive ? "true" : "false");
+            
+            // 检查顶部通知栏的状态
+            var topNotification = $(".status-notification");
+            if (topNotification.length) {
+                // 从通知栏中提取状态信息
+                var topStatusText = "";
+                if (topNotification.hasClass("status-success")) {
+                    topStatusText = "营业中";
+                    isActive = true;
+                } else if (topNotification.hasClass("status-warning")) {
+                    topStatusText = "休息中";
+                    isActive = false;
+                }
+                
+                console.log("从顶部通知栏检测到的状态:", topStatusText);
+                
+                // 如果通知栏包含"已切换为营业中"文本，则更新下方状态框
+                var notificationText = topNotification.text();
+                if (notificationText.indexOf("营业中") > -1 && !isActive) {
+                    isActive = true;
+                    console.log("检测到顶部通知栏状态为营业中，更新下方状态框");
+                } else if (notificationText.indexOf("休息中") > -1 && isActive) {
+                    isActive = false;
+                    console.log("检测到顶部通知栏状态为休息中，更新下方状态框");
+                }
+            }
+            
+            // 更新下方状态框
+            updateStatusBox(isActive);
+            
+            // 更新页面顶部状态通知
+            var statusNotification = $("#restaurantStatusNotification");
+            if (statusNotification.length) {
+                statusNotification.removeClass("status-success status-warning")
+                    .addClass(isActive ? "status-success" : "status-warning");
+                
+                var icon = statusNotification.find("i");
+                icon.removeClass("bi-shop bi-shop-window")
+                    .addClass(isActive ? "bi-shop" : "bi-shop-window");
+                
+                var statusText = statusNotification.find("span");
+                if (statusText.length) {
+                    statusText.text(isActive ? "营业中" : "休息中");
+                } else {
+                    // 如果没有找到span元素，直接更新文本
+                    var text = statusNotification.html();
+                    statusNotification.html(text.replace(/营业中|休息中/, isActive ? "营业中" : "休息中"));
+                }
+            }
+            
+            // 更新导航栏状态显示
+            var navStatus = $(".navbar-nav .nav-link:contains('营业中'), .navbar-nav .nav-link:contains('休息中')");
+            if (navStatus.length) {
+                var icon = navStatus.find("i");
+                icon.removeClass("bi-shop bi-shop-window text-success text-danger")
+                    .addClass(isActive ? "bi-shop text-success" : "bi-shop-window text-danger");
+                
+                var statusText = navStatus.find("span");
+                statusText.removeClass("text-success text-danger")
+                    .addClass(isActive ? "text-success" : "text-danger")
+                    .text(isActive ? "营业中" : "休息中");
+            }
+            
+            // 监听刷新状态按钮点击事件
+            $(".btn-outline-secondary:contains('刷新状态')").click(function() {
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            });
+        });
+        
+        // 更新下方状态框的函数
+        function updateStatusBox(isActive) {
+            // 更新状态文本
+            var statusText = isActive ? "营业中" : "休息中";
+            $("#restaurantStatusBadge")
+                .removeClass("bg-success bg-danger")
+                .addClass(isActive ? "bg-success" : "bg-danger")
+                .text(statusText);
+            
+            // 更新状态框背景
+            $(".alert").first()
+                .removeClass("alert-success alert-warning")
+                .addClass(isActive ? "alert-success" : "alert-warning");
+            
+            // 更新按钮样式和文本
+            var toggleBtn = $("#toggleStatusBtn");
+            toggleBtn
+                .removeClass("status-btn-success status-btn-danger")
+                .addClass(isActive ? "status-btn-danger" : "status-btn-success");
+            
+            var btnIcon = toggleBtn.find("i");
+            btnIcon
+                .removeClass("bi-power bi-shop")
+                .addClass(isActive ? "bi-power" : "bi-shop");
+            
+            var btnText = isActive ? "暂停营业" : "开始营业并自动接单";
+            $("#toggleStatusBtnText").text(btnText);
+            
+            console.log("已更新下方状态框为:", statusText);
+        }
+    </script>
+    
+    <!-- 原有的图表脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 显示消息提示
+            function showToast(title, message, type) {
+                var toast = $('<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">' +
+                    '<div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">' +
+                    '<div class="toast-header bg-' + type + ' text-white">' +
+                    '<strong class="me-auto">' + title + '</strong>' +
+                    '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                    '</div>' +
+                    '<div class="toast-body">' + message + '</div>' +
+                    '</div>' +
+                    '</div>');
+                
+                $("body").append(toast);
+                
+                setTimeout(function() {
+                    toast.find(".toast").removeClass("show");
+                    setTimeout(function() {
+                        toast.remove();
+                    }, 300);
+                }, 3000);
+            }
+            
+            // 初始化图表
+            initCharts();
+            
+            // 图表类型切换按钮点击事件
+            $('.chart-type-btn').click(function() {
+                $('.chart-type-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                var type = $(this).data('type');
+                updateChartTitle(type);
+                updateSalesChart(type);
+            });
+            
+            // 移除了时间段切换按钮事件处理
+            
+            // 自定义范围按钮点击事件
+            $('#applyCustomRange').click(function() {
+                var customDays = $('#customDaysInput').val();
+                if (!customDays || isNaN(customDays) || customDays < 1) {
+                    customDays = 15;
+                    $('#customDaysInput').val(15);
+                }
+                if (customDays > 365) {
+                    customDays = 365;
+                    $('#customDaysInput').val(365);
+                }
+                
+                // 关闭下拉菜单
+                $('.dropdown-menu').removeClass('show');
+                
+                // 加载自定义数据
+                loadChartData('custom', customDays);
+                
+                // 更新标题
+                var type = $('.chart-type-btn.active').data('type');
+                var typeText = type === 'revenue' ? '营业额' : (type === 'orders' ? '订单量' : '菜品销量');
+                $('#chartTitle').text('近' + customDays + '天' + typeText);
+            });
+            
+            // 饼图类型切换按钮点击事件
+            $('.pie-type-btn').click(function() {
+                $('.pie-type-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                var type = $(this).data('type');
+                updateCategoryChart(type);
+            });
+            
+            // 初始化图表函数
+            function initCharts() {
+                // 确保销售图表容器存在
+                if (!document.getElementById('salesChart')) {
+                    console.error('销售图表容器不存在');
+                    return;
+                }
+                
+                // 初始化销售图表
+                window.salesChart = echarts.init(document.getElementById('salesChart'));
+                
+                // 确保分类图表容器存在
+                if (!document.getElementById('categoryChart')) {
+                    console.error('分类图表容器不存在');
+                    return;
+                }
+                
+                // 初始化分类图表
+                window.categoryChart = echarts.init(document.getElementById('categoryChart'));
+                
+                // 加载默认15天数据
+                loadChartData('custom', 15);
+                
+                // 窗口大小改变时重新调整图表大小
+                window.addEventListener('resize', function() {
+                    if (window.salesChart) {
+                        window.salesChart.resize();
+                    }
+                    if (window.categoryChart) {
+                        window.categoryChart.resize();
+                    }
+                });
+            }
+            
+            // 加载图表数据
+            function loadChartData(period, customDays) {
+                // 显示加载状态
+                if (window.salesChart) {
+                    window.salesChart.showLoading();
+                }
+                if (window.categoryChart) {
+                    window.categoryChart.showLoading();
+                }
+                
+                // 获取餐厅ID
+                var restaurantId = globalRestaurantId;
+                
+                // 准备请求数据
+                var requestData = { 
+                    period: period,
+                    restaurantId: restaurantId 
+                };
+                
+                // 如果是自定义天数，添加到请求中
+                if (period === 'custom' && customDays) {
+                    requestData.customDays = customDays;
+                }
+                
+                // 发送AJAX请求获取数据
+                $.ajax({
+                    url: '@Url.Action("GetChartData", "Merchant")',
+                    type: 'GET',
+                    data: requestData,
+                    success: function(data) {
+                        // 隐藏加载状态
+                        if (window.salesChart) {
+                            window.salesChart.hideLoading();
+                        }
+                        if (window.categoryChart) {
+                            window.categoryChart.hideLoading();
+                        }
+                        
+                        // 更新图表数据
+                        updateChartsWithData(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('获取图表数据失败:', error);
+                        
+                        // 隐藏加载状态
+                        if (window.salesChart) {
+                            window.salesChart.hideLoading();
+                        }
+                        if (window.categoryChart) {
+                            window.categoryChart.hideLoading();
+                        }
+                        
+                        // 显示错误信息
+                        showToast('数据加载失败', '无法获取销售统计数据，请稍后再试', 'danger');
+                        
+                        // 显示空数据
+                        updateChartsWithData({
+                            dates: [],
+                            revenues: [],
+                            orders: [],
+                            dishes: [],
+                            categoryData: [],
+                            dishData: []
+                        });
+                    }
+                });
+            }
+            
+            // 处理空数据
+            function handleEmptyData(data) {
+                // 检查是否有数据
+                var hasData = data && 
+                    (data.revenues && data.revenues.length > 0) || 
+                    (data.orders && data.orders.length > 0) || 
+                    (data.dishes && data.dishes.length > 0) || 
+                    (data.categoryData && data.categoryData.length > 0) || 
+                    (data.dishData && data.dishData.length > 0);
+                
+                if (!hasData) {
+                    // 显示无数据提示
+                    showToast('暂无数据', '当前时间段内没有销售数据', 'warning');
+                    
+                    // 返回空数据结构
+                    return {
+                        dates: [],
+                        revenues: [],
+                        orders: [],
+                        dishes: [],
+                        categoryData: [],
+                        dishData: []
+                    };
+                }
+                
+                return data;
+            }
+            
+            // 更新图表标题
+            function updateChartTitle(type) {
+                // 获取自定义天数
+                var customDays = $('#customDaysInput').val() || 15;
+                var periodText = '近' + customDays + '天';
+                
+                var typeText = type === 'revenue' ? '营业额' : (type === 'orders' ? '订单量' : '菜品销量');
+                
+                $('#chartTitle').text(periodText + typeText);
+            }
+            
+            // 更新图表数据
+            function updateChartsWithData(data) {
+                // 处理空数据情况
+                data = handleEmptyData(data);
+                
+                var activeType = $('.chart-type-btn.active').data('type');
+                var activePieType = $('.pie-type-btn.active').data('type');
+                
+                updateSalesChart(activeType, data);
+                updateCategoryChart(activePieType, data);
+                
+                // 保存数据用于图表类型切换
+                window.lastChartData = data;
+            }
+            
+            // 更新销售图表
+            function updateSalesChart(type, data) {
+                if (!window.salesChart) return;
+                
+                var chartData;
+                var yAxisName;
+                
+                if (!data) {
+                    data = window.lastChartData || { dates: [], revenues: [], orders: [], dishes: [] };
+                }
+                
+                switch (type) {
+                    case 'orders':
+                        chartData = data.orders;
+                        yAxisName = '订单量 (单)';
+                        break;
+                    case 'dishes':
+                        chartData = data.dishes;
+                        yAxisName = '菜品销量 (份)';
+                        break;
+                    default: // revenue
+                        chartData = data.revenues;
+                        yAxisName = '营业额 (元)';
+                        break;
+                }
+                
+                var option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.dates,
+                        axisTick: {
+                            alignWithLabel: true
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: yAxisName
+                    },
+                    series: [{
+                        name: type === 'revenue' ? '营业额' : (type === 'orders' ? '订单量' : '菜品销量'),
+                        type: 'bar',
+                        data: chartData,
+                        itemStyle: {
+                            color: type === 'revenue' ? '#ff6b6b' : (type === 'orders' ? '#4ecdc4' : '#6c5ce7')
+                        }
+                    }]
+                };
+                
+                window.salesChart.setOption(option, true);
+                updateChartTitle(type);
+            }
+            
+            // 更新分类图表
+            function updateCategoryChart(type, data) {
+                if (!window.categoryChart) return;
+                
+                if (!data) {
+                    data = window.lastChartData || { categoryData: [], dishData: [] };
+                }
+                
+                var chartData = type === 'category' ? data.categoryData : data.dishData;
+                var title = type === 'category' ? '品类占比' : '菜品占比';
+                
+                var option = {
+                    title: {
+                        text: title,
+                        left: 'center',
+                        top: 0,
+                        textStyle: {
+                            fontSize: 14
+                        }
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    legend: {
+                        orient: 'vertical',
+                        left: 10,
+                        top: 30,
+                        data: chartData.map(function(item) { return item.name; })
+                    },
+                    series: [
+                        {
+                            name: type === 'category' ? '品类' : '菜品',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            avoidLabelOverlap: false,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: {
+                                show: false,
+                                position: 'center'
+                            },
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    fontSize: '18',
+                                    fontWeight: 'bold'
+                                }
+                            },
+                            labelLine: {
+                                show: false
+                            },
+                            data: chartData
+                        }
+                    ]
+                };
+                
+                window.categoryChart.setOption(option, true);
+            }
+        });
+    </script>
+} 
+

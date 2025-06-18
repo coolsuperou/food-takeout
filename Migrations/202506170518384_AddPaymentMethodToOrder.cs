@@ -3,16 +3,16 @@
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class InitialCreate : DbMigration
+    public partial class AddPaymentMethodToOrder : DbMigration
     {
         public override void Up()
         {
-            AddColumn("dbo.Restaurant", "ImageUrl", c => c.String(maxLength: 255));
+            AddColumn("dbo.Order", "PaymentMethod", c => c.String(maxLength: 50));
         }
         
         public override void Down()
         {
-            DropColumn("dbo.Restaurant", "ImageUrl");
+            DropColumn("dbo.Order", "PaymentMethod");
         }
     }
 }

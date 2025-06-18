@@ -1,0 +1,619 @@
+@model IEnumerable<food_takeout.Models.Order>
+@{
+    ViewBag.Title = "销售统计";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .chart-container {
+        height: 400px;
+        margin-bottom: 30px;
+    }
+    .stats-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .stats-icon {
+        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: white;
+    }
+    .filter-btn.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h2><i class="bi bi-graph-up"></i> 销售统计</h2>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportData">
+                    <i class="bi bi-download"></i> 导出数据
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="printReport">
+                    <i class="bi bi-printer"></i> 打印报表
+                </button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-secondary filter-btn active" data-period="week">周</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary filter-btn" data-period="month">月</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary filter-btn" data-period="year">年</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据概览卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary bg-gradient text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">总营业额</h6>
+                            <h3 class="card-title mb-0">¥<span id="totalRevenue">0.00</span></h3>
+                            <p class="mb-0"><span id="revenueCompare">0</span>% 较上期</p>
+                        </div>
+                        <div class="stats-icon bg-white text-primary">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-success bg-gradient text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">总订单数</h6>
+                            <h3 class="card-title mb-0"><span id="totalOrders">0</span>单</h3>
+                            <p class="mb-0"><span id="ordersCompare">0</span>% 较上期</p>
+                        </div>
+                        <div class="stats-icon bg-white text-success">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-info bg-gradient text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">客单价</h6>
+                            <h3 class="card-title mb-0">¥<span id="averageOrder">0.00</span></h3>
+                            <p class="mb-0"><span id="averageCompare">0</span>% 较上期</p>
+                        </div>
+                        <div class="stats-icon bg-white text-info">
+                            <i class="bi bi-currency-yen"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning bg-gradient text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-dark">热销菜品数</h6>
+                            <h3 class="card-title mb-0"><span id="hotDishesCount">0</span>个</h3>
+                            <p class="mb-0">占总菜品 <span id="dishesPercentage">0</span>%</p>
+                        </div>
+                        <div class="stats-icon bg-white text-warning">
+                            <i class="bi bi-star"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 营业额趋势</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn active" data-type="bar">柱状图</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn" data-type="line">折线图</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary chart-type-btn" data-type="area">面积图</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="revenueChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> 订单状态分布</h5>
+                </div>
+                <div class="card-body">
+                    <div id="orderStatusChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> 热销菜品排行</h5>
+                </div>
+                <div class="card-body">
+                    <div id="hotDishesChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock"></i> 订单时段分布</h5>
+                </div>
+                <div class="card-body">
+                    <div id="orderTimeChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-calendar3"></i> 每日营业额与订单量</h5>
+                </div>
+                <div class="card-body">
+                    <div id="dailyRevenueOrdersChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // 初始化图表实例
+            window.charts = {
+                revenueChart: echarts.init(document.getElementById('revenueChart')),
+                orderStatusChart: echarts.init(document.getElementById('orderStatusChart')),
+                hotDishesChart: echarts.init(document.getElementById('hotDishesChart')),
+                orderTimeChart: echarts.init(document.getElementById('orderTimeChart')),
+                dailyRevenueOrdersChart: echarts.init(document.getElementById('dailyRevenueOrdersChart'))
+            };
+            
+            // 窗口大小改变时，重新调整图表大小
+            window.addEventListener('resize', function() {
+                for (var chart in window.charts) {
+                    if (window.charts[chart]) {
+                        window.charts[chart].resize();
+                    }
+                }
+            });
+            
+            // 时间段筛选按钮点击事件
+            $('.filter-btn').click(function() {
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+                var period = $(this).data('period');
+                loadData(period);
+            });
+            
+            // 图表类型切换按钮点击事件
+            $('.chart-type-btn').click(function() {
+                var parent = $(this).parent();
+                parent.find('.chart-type-btn').removeClass('active');
+                $(this).addClass('active');
+                var type = $(this).data('type');
+                var period = $('.filter-btn.active').data('period');
+                
+                // 根据选择的图表类型更新图表
+                if (parent.closest('.card').find('#revenueChart').length > 0) {
+                    updateRevenueChart(type, window.chartData[period]);
+                }
+            });
+            
+            // 加载初始数据
+            loadData('week');
+            
+            // 导出数据按钮点击事件
+            $('#exportData').click(function() {
+                alert('数据导出功能将在后续版本中提供');
+            });
+            
+            // 打印报表按钮点击事件
+            $('#printReport').click(function() {
+                window.print();
+            });
+        });
+        
+        // 加载数据函数
+        function loadData(period) {
+            // 显示加载状态
+            showLoading();
+            
+            // 发送AJAX请求获取数据
+            $.ajax({
+                url: '@Url.Action("GetSalesData", "Orders")',
+                type: 'GET',
+                data: { period: period },
+                success: function(data) {
+                    // 判断返回的数据是否包含错误信息
+                    if (data.error) {
+                        console.error('获取数据出错:', data.error);
+                        // 显示错误提示
+                        alert('获取数据失败: ' + data.error);
+                        hideLoading();
+                        return;
+                    }
+                    
+                    // 保存数据到全局变量
+                    window.chartData = window.chartData || {};
+                    window.chartData[period] = data;
+                    
+                    // 更新统计卡片
+                    updateStatCards(data);
+                    
+                    // 更新所有图表
+                    updateCharts(data);
+                    
+                    // 隐藏加载状态
+                    hideLoading();
+                },
+                error: function(xhr, status, error) {
+                    console.error('获取数据失败:', error);
+                    hideLoading();
+                    
+                    // 显示错误提示给用户
+                    alert('获取数据失败，请确保您已创建餐厅并有订单数据。错误信息: ' + error);
+                }
+            });
+        }
+        
+        // 显示加载状态
+        function showLoading() {
+            // 为每个图表容器添加加载动画
+            $('.chart-container').each(function() {
+                var loadingDiv = $('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">加载中...</p></div>');
+                $(this).html(loadingDiv);
+            });
+        }
+        
+        // 隐藏加载状态
+        function hideLoading() {
+            $('.chart-container').find('.spinner-border').parent().remove();
+            
+            // 如果没有数据，显示无数据状态
+            if (!window.chartData || Object.keys(window.chartData).length === 0) {
+                showNoDataState();
+            }
+        }
+        
+        // 格式化日期
+        function formatDate(date) {
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            return month + '/' + day;
+        }
+        
+        // 格式化日期
+        function formatDate(date) {
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            return month + '/' + day;
+        }
+        
+        // 更新统计卡片
+        function updateStatCards(data) {
+            $('#totalRevenue').text(data.totalRevenue.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            $('#totalOrders').text(data.totalOrders);
+            $('#averageOrder').text(data.averageOrder);
+            $('#hotDishesCount').text(data.hotDishesCount);
+            $('#dishesPercentage').text(data.dishesPercentage);
+            
+            // 更新比较数据并设置颜色
+            updateCompareValue('revenueCompare', data.revenueCompare);
+            updateCompareValue('ordersCompare', data.ordersCompare);
+            updateCompareValue('averageCompare', data.averageCompare);
+        }
+        
+        // 更新比较值并设置颜色
+        function updateCompareValue(id, value) {
+            var element = $('#' + id);
+            element.text(value > 0 ? '+' + value : value);
+            element.removeClass('text-success text-danger');
+            element.addClass(value >= 0 ? 'text-success' : 'text-danger');
+        }
+        
+        // 显示无数据状态
+        function showNoDataState() {
+            $('.chart-container').each(function() {
+                var noDataDiv = $('<div class="text-center py-5"><div class="alert alert-info" role="alert"><i class="bi bi-info-circle"></i> 暂无数据，请确保您已创建餐厅并有订单数据。</div></div>');
+                $(this).html(noDataDiv);
+            });
+            
+            // 重置统计卡片数据
+            $('#totalRevenue').text('0.00');
+            $('#totalOrders').text('0');
+            $('#averageOrder').text('0.00');
+            $('#hotDishesCount').text('0');
+            $('#dishesPercentage').text('0');
+            $('#revenueCompare').text('0');
+            $('#ordersCompare').text('0');
+            $('#averageCompare').text('0');
+        }
+        
+        // 更新所有图表
+        function updateCharts(data) {
+            // 获取当前选中的图表类型
+            var revenueChartType = $('.chart-type-btn.active').data('type') || 'bar';
+            
+            // 更新各个图表
+            updateRevenueChart(revenueChartType, data);
+            updateOrderStatusChart(data);
+            updateHotDishesChart(data);
+            updateOrderTimeChart(data);
+            updateDailyRevenueOrdersChart(data);
+        }
+        
+        // 更新营业额趋势图
+        function updateRevenueChart(type, data) {
+            var option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['营业额']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.dates,
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '金额 (元)'
+                },
+                series: [{
+                    name: '营业额',
+                    type: type === 'line' ? 'line' : (type === 'area' ? 'line' : 'bar'),
+                    areaStyle: type === 'area' ? {} : null,
+                    data: data.revenues,
+                    itemStyle: {
+                        color: '#ff6b6b'
+                    },
+                    lineStyle: {
+                        width: 3,
+                        color: '#ff6b6b'
+                    },
+                    smooth: true
+                }]
+            };
+            
+            window.charts.revenueChart.setOption(option);
+        }
+        
+        // 更新订单状态分布图
+        function updateOrderStatusChart(data) {
+            var option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 10,
+                    data: data.orderStatusData.map(function(item) { return item.name; })
+                },
+                series: [
+                    {
+                        name: '订单状态',
+                        type: 'pie',
+                        radius: ['50%', '70%'],
+                        avoidLabelOverlap: false,
+                        label: {
+                            show: false,
+                            position: 'center'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: '18',
+                                fontWeight: 'bold'
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data: data.orderStatusData,
+                        color: ['#28a745', '#17a2b8', '#ffc107', '#dc3545', '#6c757d']
+                    }
+                ]
+            };
+            
+            window.charts.orderStatusChart.setOption(option);
+        }
+        
+        // 更新热销菜品排行图
+        function updateHotDishesChart(data) {
+            var option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value',
+                    name: '销售量 (份)'
+                },
+                yAxis: {
+                    type: 'category',
+                    data: data.hotDishesData.map(function(item) { return item.name; }),
+                    axisTick: {
+                        alignWithLabel: true
+                    }
+                },
+                series: [{
+                    name: '销售量',
+                    type: 'bar',
+                    data: data.hotDishesData.map(function(item) { return item.value; }),
+                    itemStyle: {
+                        color: function(params) {
+                            var colorList = ['#ff6b6b', '#ff8c42', '#ffb347', '#ffd166', '#06d6a0'];
+                            return colorList[params.dataIndex % colorList.length];
+                        }
+                    }
+                }]
+            };
+            
+            window.charts.hotDishesChart.setOption(option);
+        }
+        
+        // 更新订单时段分布图
+        function updateOrderTimeChart(data) {
+            var option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    right: 10,
+                    top: 'center',
+                    data: data.orderTimeData.map(function(item) { return item.name; })
+                },
+                series: [
+                    {
+                        name: '订单时段',
+                        type: 'pie',
+                        radius: '55%',
+                        center: ['40%', '50%'],
+                        data: data.orderTimeData,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+            
+            window.charts.orderTimeChart.setOption(option);
+        }
+        
+        // 更新每日营业额与订单量图
+        function updateDailyRevenueOrdersChart(data) {
+            var option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        crossStyle: {
+                            color: '#999'
+                        }
+                    }
+                },
+                legend: {
+                    data: ['营业额', '订单量']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: data.dates,
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    }
+                ],
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '营业额 (元)',
+                        min: 0,
+                        axisLabel: {
+                            formatter: '{value} 元'
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '订单量 (单)',
+                        min: 0,
+                        axisLabel: {
+                            formatter: '{value} 单'
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '营业额',
+                        type: 'bar',
+                        data: data.revenues,
+                        itemStyle: {
+                            color: '#4ecdc4'
+                        }
+                    },
+                    {
+                        name: '订单量',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: data.orders,
+                        itemStyle: {
+                            color: '#ff6b6b'
+                        },
+                        lineStyle: {
+                            width: 3,
+                            color: '#ff6b6b'
+                        },
+                        smooth: true
+                    }
+                ]
+            };
+            
+            window.charts.dailyRevenueOrdersChart.setOption(option);
+        }
+    </script>
+} 

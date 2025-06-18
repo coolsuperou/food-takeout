@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美味快送 - 骑手中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7f7f7;
+            --rider-color: #ffd166;
+            --status-new: #6c5ce7;
+            --status-pickup: #ff9f43;
+            --status-delivering: #1e90ff;
+            --status-completed: #2ed573;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-rider {
+            background-color: var(--rider-color);
+            border-color: var(--rider-color);
+            color: var(--dark-color);
+        }
+        .btn-rider:hover {
+            background-color: #ffc233;
+            border-color: #ffc233;
+            color: var(--dark-color);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.65rem;
+        }
+        .rider-header {
+            background: linear-gradient(135deg, var(--rider-color), #ff9f43);
+            color: var(--dark-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .section-header {
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--rider-color);
+        }
+        .order-card {
+            cursor: pointer;
+        }
+        .order-card.active {
+            border: 2px solid var(--rider-color);
+        }
+        .order-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-new {
+            background-color: var(--status-new);
+        }
+        .status-pickup {
+            background-color: var(--status-pickup);
+        }
+        .status-delivering {
+            background-color: var(--status-delivering);
+        }
+        .status-completed {
+            background-color: var(--status-completed);
+        }
+        .stats-card {
+            text-align: center;
+            padding: 15px;
+        }
+        .stats-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--rider-color);
+        }
+        .stats-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .map-container {
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .step-indicator {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .step-indicator li {
+            position: relative;
+            padding-bottom: 30px;
+            padding-left: 40px;
+        }
+        .step-indicator li:before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #ddd;
+        }
+        .step-indicator li:first-child:before {
+            top: 10px;
+        }
+        .step-indicator li:last-child:before {
+            bottom: auto;
+            height: 10px;
+        }
+        .step-indicator .step-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background-color: #fff;
+            border: 2px solid #ddd;
+            color: #555;
+            position: absolute;
+            left: 0;
+            top: 0;
+            text-align: center;
+            line-height: 22px;
+        }
+        .step-indicator .completed .step-icon {
+            background-color: var(--status-completed);
+            border-color: var(--status-completed);
+            color: white;
+        }
+        .step-indicator .active .step-icon {
+            background-color: var(--status-delivering);
+            border-color: var(--status-delivering);
+            color: white;
+        }
+        .step-indicator .step-content {
+            padding-top: 3px;
+        }
+        .step-indicator .completed .step-content,
+        .step-indicator .active .step-content {
+            color: #000;
+        }
+        .income-chart {
+            height: 200px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--rider-color);
+            color: var(--dark-color);
+        }
+        .nav-pills .nav-link {
+            color: var(--dark-color);
+        }
+        @media (max-width: 767.98px) {
+            .map-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bicycle"></i> 美味快送
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://via.placeholder.com/32" alt="骑手头像" class="rounded-circle me-2" width="32" height="32">
+                        <span>李师傅</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> 个人资料</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-cash-coin"></i> 我的收益</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> 设置</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- 骑手信息头部 -->
+        <div class="rider-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="bi bi-bicycle"></i> 骑手中心</h2>
+                    <p class="mb-0">您好，李师傅 | ID: R10086 | <span class="badge bg-success">在线接单中</span></p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button class="btn btn-light"><i class="bi bi-geo-alt-fill"></i> 实时位置已开启</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 骑手数据统计 -->
+        <div class="row mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-icon">
+                        <i class="bi bi-speedometer"></i>
+                    </div>
+                    <div class="stats-value">8</div>
+                    <div class="stats-label">今日已完成</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stats-value">25分钟</div>
+                    <div class="stats-label">平均配送时间</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-icon">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                    <div class="stats-value">4.9</div>
+                    <div class="stats-label">评分</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-icon">
+                        <i class="bi bi-cash"></i>
+                    </div>
+                    <div class="stats-value">¥215</div>
+                    <div class="stats-label">今日收入</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航标签页 -->
+        <ul class="nav nav-pills mb-4" id="orderTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab">可接订单 <span class="badge bg-danger rounded-pill">3</span></button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab">配送中 <span class="badge bg-primary rounded-pill">1</span></button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">历史订单</button>
+            </li>
+        </ul>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="orderTabContent">
+            <!-- 可接订单标签页 -->
+            <div class="tab-pane fade show active" id="available" role="tabpanel" aria-labelledby="available-tab">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card order-card active">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">#ORD-20231125-01</h6>
+                                    <span class="badge bg-primary status-badge">新订单</span>
+                                </div>
+                                <p class="mb-2"><i class="bi bi-shop"></i> <strong>川湘菜馆</strong> → 朝阳区建国路88号</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-geo"></i> 2.5km</span>
+                                    <span><i class="bi bi-cash"></i> ¥8.5</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">12:05下单</small>
+                                    <button class="btn btn-rider btn-sm">抢单</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card order-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">#ORD-20231125-02</h6>
+                                    <span class="badge bg-primary status-badge">新订单</span>
+                                </div>
+                                <p class="mb-2"><i class="bi bi-shop"></i> <strong>麦当劳</strong> → 朝阳区东三环中路39号</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-geo"></i> 1.8km</span>
+                                    <span><i class="bi bi-cash"></i> ¥7.0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">12:12下单</small>
+                                    <button class="btn btn-rider btn-sm">抢单</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card order-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">#ORD-20231125-03</h6>
+                                    <span class="badge bg-primary status-badge">新订单</span>
+                                </div>
+                                <p class="mb-2"><i class="bi bi-shop"></i> <strong>披萨汇</strong> → 朝阳区工体北路8号</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-geo"></i> 3.2km</span>
+                                    <span><i class="bi bi-cash"></i> ¥10.0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">12:15下单</small>
+                                    <button class="btn btn-rider btn-sm">抢单</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配送中标签页 -->
+            <div class="tab-pane fade" id="current" role="tabpanel" aria-labelledby="current-tab">
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">订单 #ORD-20231125-08</h5>
+                            <span class="badge bg-primary">配送中</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-7 mb-3">
+                                <div class="map-container">
+                                    <img src="https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+555555(121.5,31.2),pin-s+ff6b6b(121.52,31.22),path-5+1e90ff-0.5(uxwnFxyklU~@SxAuB)/121.51,31.21,14,0/600x400?access_token=pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2xxxxx" class="img-fluid w-100 h-100" alt="配送路线" style="object-fit: cover;">
+                                    <div class="position-absolute bottom-0 start-0 end-0 p-3 bg-white bg-opacity-75">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <i class="bi bi-geo-alt"></i> 配送距离: 2.5公里
+                                            </div>
+                                            <div>
+                                                <i class="bi bi-clock"></i> 预计到达: 12:32
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-shop fs-4 me-2"></i>
+                                            <div>
+                                                <h6 class="mb-0">老王牛肉面</h6>
+                                                <p class="text-muted mb-0">朝阳区工人体育场北路21号</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person fs-4 me-2"></i>
+                                            <div>
+                                                <h6 class="mb-0">张先生</h6>
+                                                <p class="text-muted mb-0">朝阳区建国路88号 (3.2公里)</p>
+                                                <p class="text-muted mb-0">电话: 138****5678</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <ul class="step-indicator">
+                                        <li class="completed">
+                                            <div class="step-icon"><i class="bi bi-check"></i></div>
+                                            <div class="step-content">
+                                                <p class="mb-0 fw-bold">已接单</p>
+                                                <small class="text-muted">12:05</small>
+                                            </div>
+                                        </li>
+                                        <li class="completed">
+                                            <div class="step-icon"><i class="bi bi-check"></i></div>
+                                            <div class="step-content">
+                                                <p class="mb-0 fw-bold">已到店</p>
+                                                <small class="text-muted">12:15</small>
+                                            </div>
+                                        </li>
+                                        <li class="active">
+                                            <div class="step-icon"><i class="bi bi-bicycle"></i></div>
+                                            <div class="step-content">
+                                                <p class="mb-0 fw-bold">配送中</p>
+                                                <small class="text-muted">12:20</small>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="step-icon"><i class="bi bi-house"></i></div>
+                                            <div class="step-content">
+                                                <p class="mb-0 fw-bold">已送达</p>
+                                                <small class="text-muted">预计12:32</small>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-rider w-100">确认送达</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>订单信息</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <tbody>
+                                            <tr>
+                                                <td>牛肉面</td>
+                                                <td>x 1</td>
+                                                <td class="text-end">¥22.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td>饺子</td>
+                                                <td>x 10</td>
+                                                <td class="text-end">¥15.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2" class="text-end fw-bold">合计</td>
+                                                <td class="text-end fw-bold">¥37.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="alert alert-warning mt-2">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> 顾客备注：不要辣，多加葱。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史订单标签页 -->
+            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">今日配送记录</h5>
+                            <div>
+                                <button class="btn btn-outline-secondary btn-sm">日</button>
+                                <button class="btn btn-outline-secondary btn-sm">周</button>
+                                <button class="btn btn-outline-secondary btn-sm">月</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>订单号</th>
+                                        <th>商家</th>
+                                        <th>配送地址</th>
+                                        <th>距离</th>
+                                        <th>完成时间</th>
+                                        <th>状态</th>
+                                        <th>收入</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#ORD-20231125-07</td>
+                                        <td>肯德基</td>
+                                        <td>朝阳区三里屯SOHO</td>
+                                        <td>2.3km</td>
+                                        <td>11:50</td>
+                                        <td><span class="badge bg-success">已完成</span></td>
+                                        <td>¥7.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#ORD-20231125-06</td>
+                                        <td>日式料理店</td>
+                                        <td>朝阳区团结湖南里</td>
+                                        <td>3.1km</td>
+                                        <td>11:25</td>
+                                        <td><span class="badge bg-success">已完成</span></td>
+                                        <td>¥9.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#ORD-20231125-05</td>
+                                        <td>川湘菜馆</td>
+                                        <td>朝阳区东大桥路8号</td>
+                                        <td>1.8km</td>
+                                        <td>10:45</td>
+                                        <td><span class="badge bg-success">已完成</span></td>
+                                        <td>¥6.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#ORD-20231125-04</td>
+                                        <td>麦当劳</td>
+                                        <td>朝阳区东三环北路20号</td>
+                                        <td>2.0km</td>
+                                        <td>10:20</td>
+                                        <td><span class="badge bg-success">已完成</span></td>
+                                        <td>¥7.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#ORD-20231125-03</td>
+                                        <td>川湘菜馆</td>
+                                        <td>朝阳区光华路15号</td>
+                                        <td>2.5km</td>
+                                        <td>09:50</td>
+                                        <td><span class="badge bg-success">已完成</span></td>
+                                        <td>¥8.0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 收入统计图表 -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">收入统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="incomeChart" class="income-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5>美味快送 - 骑手服务</h5>
+                    <p class="mb-0">随时随地，安全送达</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">紧急联系电话: 400-123-4567</p>
+                    <p class="mb-0">工作时间: 08:00-22:00</p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 美味快送 - 餐饮外卖系统. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 收入图表
+            var incomeChart = echarts.init(document.getElementById('incomeChart'));
+            var incomeOption = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['11/19', '11/20', '11/21', '11/22', '11/23', '11/24', '11/25']
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        name: '配送收入',
+                        type: 'bar',
+                        data: [188, 202, 176, 195, 210, 192, 215],
+                        itemStyle: {
+                            color: '#ffd166'
+                        }
+                    }
+                ]
+            };
+            incomeChart.setOption(incomeOption);
+
+            // 窗口大小变化时重新绘制图表
+            window.addEventListener('resize', function() {
+                incomeChart.resize();
+            });
+
+            // 当标签页切换时重新绘制图表
+            var historyTab = document.getElementById('history-tab');
+            historyTab.addEventListener('shown.bs.tab', function (event) {
+                incomeChart.resize();
+            });
+        });
+    </script>
+</body>
+</html>

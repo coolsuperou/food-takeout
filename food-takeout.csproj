@@ -46,11 +46,17 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
+      <HintPath>packages\BouncyCastle.Cryptography.2.4.0\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>packages\EntityFramework.6.5.1\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>packages\EntityFramework.6.5.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.4, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>packages\iTextSharp.5.5.13.4\lib\net461\itextsharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
@@ -131,38 +137,57 @@
     <Compile Include="Controllers\AdminOnlyAttribute.cs" />
     <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\CustomersController.cs" />
+    <Compile Include="Controllers\CustomerController.cs" />
     <Compile Include="Controllers\DishesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\MerchantController.cs" />
     <Compile Include="Controllers\OrderDetailsController.cs" />
     <Compile Include="Controllers\OrdersController.cs" />
     <Compile Include="Controllers\RestaurantsController.cs" />
     <Compile Include="Controllers\ReviewsController.cs" />
     <Compile Include="Controllers\RidersController.cs" />
+    <Compile Include="Controllers\RiderController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\FileUploadHelper.cs" />
-    <Compile Include="Migrations\202506100246096_InitialCreate.cs" />
-    <Compile Include="Migrations\202506100246096_InitialCreate.Designer.cs">
-      <DependentUpon>202506100246096_InitialCreate.cs</DependentUpon>
+    <Compile Include="Migrations\202506151540255_InitialCreate.cs" />
+    <Compile Include="Migrations\202506151540255_InitialCreate.Designer.cs">
+      <DependentUpon>202506151540255_InitialCreate.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202506100312584_UpdateFoodContext.cs" />
-    <Compile Include="Migrations\202506100312584_UpdateFoodContext.Designer.cs">
-      <DependentUpon>202506100312584_UpdateFoodContext.cs</DependentUpon>
+    <Compile Include="Migrations\202506170518384_AddPaymentMethodToOrder.cs" />
+    <Compile Include="Migrations\202506170518384_AddPaymentMethodToOrder.Designer.cs">
+      <DependentUpon>202506170518384_AddPaymentMethodToOrder.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\AdminOnlyAttribute.cs" />
     <Compile Include="Models\Customer.cs" />
+    <Compile Include="Models\CustomerOnlyAttribute.cs" />
     <Compile Include="Models\Dish.cs" />
+    <Compile Include="Models\DishViewModel.cs" />
+    <Compile Include="Models\Extensions.cs" />
     <Compile Include="Models\FoodContext.cs" />
+    <Compile Include="Models\Merchant.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\OrderDetail.cs" />
     <Compile Include="Models\Restaurant.cs" />
     <Compile Include="Models\Review.cs" />
     <Compile Include="Models\Rider.cs" />
+    <Compile Include="Models\RoleType.cs" />
+    <Compile Include="Models\UserRole.cs" />
+    <Compile Include="Models\UserTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModels\AccountViewModels.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\error_log.txt" />
+    <Content Include="App_Data\prod\Customer.html" />
+    <Content Include="App_Data\prod\index.html" />
+    <Content Include="App_Data\prod\Restaurant\Dish.html" />
+    <Content Include="App_Data\prod\Restaurant\DishManagement.html" />
+    <Content Include="App_Data\prod\Restaurant\Restaurant.html" />
+    <Content Include="App_Data\prod\Restaurant\Restaurantsetting.html" />
+    <Content Include="App_Data\prod\Rider.html" />
     <Content Include="Content\bootstrap-grid.css" />
     <Content Include="Content\bootstrap-grid.min.css" />
     <Content Include="Content\bootstrap-grid.rtl.css" />
@@ -179,6 +204,9 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\Images\Dishes\354aab8d-72db-4caa-bb50-9149511da698.png" />
+    <Content Include="Content\Images\Dishes\47012cdf-dbdc-4ddf-b0ba-0f7b75fc94c3.png" />
+    <Content Include="Content\Images\Dishes\a6c14e41-b88e-4803-a051-31ddc3d45147.png" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -188,6 +216,7 @@
     <Content Include="Scripts\bootstrap.esm.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
+    <Content Include="App_Data\prod\gon.md" />
     <None Include="Scripts\jquery-3.7.0.intellisense.js" />
     <Content Include="Scripts\jquery-3.7.0.js" />
     <Content Include="Scripts\jquery-3.7.0.min.js" />
@@ -199,6 +228,7 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Uploads\Dishes\ff982d59-2d4b-43d9-9e31-d360db7a43a6.png" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -233,10 +263,29 @@
     <Content Include="Views\Restaurants\Details.cshtml" />
     <Content Include="Views\Restaurants\Edit.cshtml" />
     <Content Include="Views\Restaurants\Index.cshtml" />
+    <Content Include="Views\Orders\RiderOrders.cshtml" />
+    <Content Include="Views\Orders\MerchantOrders.cshtml" />
+    <Content Include="Views\Dishes\ManageDishes.cshtml" />
+    <Content Include="Views\Home\Rider.cshtml" />
+    <Content Include="Views\Merchant\Dashboard.cshtml" />
+    <Content Include="Views\Customer\Index.cshtml" />
+    <Content Include="Views\Rider\Index.cshtml" />
+    <Content Include="Views\Merchant\CreateRestaurant.cshtml" />
+    <Content Include="Views\Merchant\MyRestaurants.cshtml" />
+    <Content Include="Views\Merchant\RestaurantSettings.cshtml" />
+    <Content Include="Views\Cart\Index.cshtml" />
+    <Content Include="Views\Home\Error.cshtml" />
+    <Content Include="Views\Cart\Add.cshtml" />
+    <Content Include="Views\Orders\DeliveryHistory.cshtml" />
+    <Content Include="Views\Merchant\TestRevenue.cshtml" />
+    <Content Include="Views\Test\OrderDetails.cshtml" />
+    <Content Include="Views\Test\Revenue.cshtml" />
+    <Content Include="Views\Orders\SalesStatistics.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Data\" />
-    <Folder Include="NewFolder1\" />
+    <Folder Include="Content\fonts\" />
+    <Folder Include="Content\Images\Restaurants\" />
+    <Folder Include="Uploads\Restaurants\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />
@@ -274,11 +323,11 @@
     <Content Include="Scripts\jquery-3.7.0.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\202506100246096_InitialCreate.resx">
-      <DependentUpon>202506100246096_InitialCreate.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\202506151540255_InitialCreate.resx">
+      <DependentUpon>202506151540255_InitialCreate.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202506100312584_UpdateFoodContext.resx">
-      <DependentUpon>202506100312584_UpdateFoodContext.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\202506170518384_AddPaymentMethodToOrder.resx">
+      <DependentUpon>202506170518384_AddPaymentMethodToOrder.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

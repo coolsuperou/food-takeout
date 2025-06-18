@@ -1,10 +1,17 @@
 @model food_takeout.Models.Restaurant
+@using food_takeout.Models
 
 @{
     ViewBag.Title = "餐厅详情";
+    var dishes = ViewBag.Dishes as IEnumerable<DishViewModel> ?? new List<DishViewModel>();
+    var dishList = ViewData["DishList"] as IEnumerable<DishViewModel> ?? new List<DishViewModel>();
+    var dishCount = ViewData["DishCount"] as int? ?? 0;
+    var currentUrl = Request.Url.AbsoluteUri; // 获取当前页面URL
 }
 
 <h2>@Model.Name</h2>
+
+
 
 <div class="row">
     <div class="col-md-4">
@@ -38,17 +45,22 @@
                     {
                         @Html.ActionLink("编辑", "Edit", new { id = Model.RestaurantId }, new { @class = "btn btn-warning btn-sm" })
                     }
-                    @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-default btn-sm" })
+                    <a href="@Url.Action("Index", "Cart")" class="btn btn-primary">
+                        <i class="bi bi-cart"></i> 查看购物车
+                    </a>
+                    @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-secondary" })
                 </p>
             </div>
         </div>
     </div>
     <div class="col-md-8">
         <h3>菜品列表</h3>
-        @if (ViewBag.Dishes != null && ViewBag.Dishes.Count > 0)
+        
+        <!-- 优先使用ViewData中的菜品列表 -->
+        @if (dishList != null && dishList.Any())
         {
             <div class="row">
-                @foreach (var item in ViewBag.Dishes)
+                @foreach (var item in dishList)
                 {
                     <div class="col-md-6 col-sm-12 mb-4">
                         <div class="card h-100">
@@ -59,15 +71,25 @@
                                 }
                                 else
                                 {
-                                    <img src="/Content/Images/dish-placeholder.jpg" alt="@item.Name" style="width: 100%; object-fit: cover;" />
+                                    <img src="/Content/Images/Dishes/default.jpg" alt="@item.Name" style="width: 100%; object-fit: cover;" />
                                 }
                             </div>
                             <div class="card-body">
                                 <h4 class="card-title">@item.Name</h4>
                                 <p class="card-text">¥@item.Price.ToString("F2")</p>
-                                <p>
-                                    @Html.ActionLink("查看详情", "Details", "Dishes", new { id = item.DishId }, new { @class = "btn btn-info btn-sm" })
-                                </p>
+                                
+                                @using (Html.BeginForm("Add", "Cart", FormMethod.Get, new { @class = "d-flex align-items-center" }))
+                                {
+                                    <input type="hidden" name="dishId" value="@item.Id" />
+                                    <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                    <div class="input-group input-group-sm mb-2">
+                                        <span class="input-group-text">数量</span>
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="99" style="width: 60px;" />
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="bi bi-cart-plus"></i> 加入购物车
+                                    </button>
+                                }
                             </div>
                         </div>
                     </div>
@@ -77,6 +99,28 @@
         else
         {
             <p>该餐厅暂无可用菜品</p>
+            
+            <!-- 添加原始SQL查询测试按钮 -->
+            <div class="mt-4">
+                <a href="@Url.Action("Dishes", "Test", new { id = Model.RestaurantId })" target="_blank" class="btn btn-warning">
+                    测试查询菜品
+                </a>
+            </div>
         }
     </div>
 </div> 
+
+@section scripts {
+    <script>
+        // 使用Ajax方式加入购物车的脚本
+        $(function() {
+            $('.add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                $.post($(this).attr('action'), $(this).serialize(), function(response) {
+                    alert('菜品已添加到购物车!');
+                });
+            });
+        });
+    </script>
+} 

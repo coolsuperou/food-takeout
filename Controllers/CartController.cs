@@ -1,140 +1,225 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
 using System.Linq;
+using System.Net;
 using System.Web;
 using System.Web.Mvc;
 using food_takeout.Models;
 
 namespace food_takeout.Controllers
 {
+    public class CartItem
+    {
+        public int DishId { get; set; }
+        public string DishName { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public int RestaurantId { get; set; }
+        public string RestaurantName { get; set; }
+        public decimal TotalPrice { get { return Quantity * Price; } }
+    }
+
     public class CartController : Controller
     {
         private FoodContext db = new FoodContext();
 
-        // 获取购物车数据
-        private List<CartItem> GetCart()
-        {
-            List<CartItem> cart = Session["Cart"] as List<CartItem>;
-            if (cart == null)
-            {
-                cart = new List<CartItem>();
-                Session["Cart"] = cart;
-            }
-            return cart;
-        }
-
         // GET: Cart
         public ActionResult Index()
         {
-            // 检查用户是否登录
-            if (Session["CustomerId"] == null)
+            // 检查用户是否已登录
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != UserTypes.Customer)
             {
-                return RedirectToAction("Login", "Account");
+                // 未登录，重定向到登录页面
+                return RedirectToAction("Login", "Account", new { returnUrl = Request.Url.ToString() });
             }
 
-            var cart = GetCart();
+            var cart = Session["Cart"] as List<CartItem> ?? new List<CartItem>();
             return View(cart);
         }
 
-        // POST: Cart/AddToCart
-        [HttpPost]
-        public ActionResult AddToCart(int dishId, int quantity = 1)
+        // GET: Cart/Add
+        public ActionResult Add(int? dishId = null, int quantity = 1, string returnUrl = null)
         {
-            // 检查用户是否登录
-            if (Session["CustomerId"] == null)
+            // 检查用户是否已登录
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != UserTypes.Customer)
             {
-                return RedirectToAction("Login", "Account");
+                // 未登录，保存当前请求信息到TempData，然后重定向到登录页面
+                if (dishId.HasValue)
+                {
+                    TempData["PendingDishId"] = dishId.Value;
+                    TempData["PendingQuantity"] = quantity;
+                    TempData["PendingAction"] = "AddToCart";
+                }
+                
+                // 如果没有提供returnUrl，则使用当前请求的URL
+                if (string.IsNullOrEmpty(returnUrl))
+                {
+                    returnUrl = Request.UrlReferrer?.ToString() ?? Url.Action("Index", "Restaurants");
+                }
+                
+                return RedirectToAction("Login", "Account", new { returnUrl = returnUrl });
             }
 
-            // 查找菜品
-            var dish = db.Dishes.Find(dishId);
+            // 如果没有提供dishId，则只显示添加成功页面
+            if (!dishId.HasValue)
+            {
+                return View();
+            }
+
+            var dish = db.Dishes.Find(dishId.Value);
             if (dish == null)
             {
                 return HttpNotFound();
             }
 
-            // 获取购物车
-            var cart = GetCart();
+            var cart = Session["Cart"] as List<CartItem> ?? new List<CartItem>();
             
-            // 检查购物车中是否已有该菜品
-            var existingItem = cart.FirstOrDefault(i => i.DishId == dishId);
-            if (existingItem != null)
+            // 检查购物车中是否已有其他餐厅的商品
+            if (cart.Any() && cart.First().RestaurantId != dish.RestaurantId)
             {
-                // 更新数量
-                existingItem.Quantity += quantity;
+                // 如果有其他餐厅的商品，提示用户
+                TempData["ErrorMessage"] = "您的购物车中已有其他餐厅的商品，不能同时从多家餐厅点餐。";
+                
+                // 如果没有提供returnUrl，则使用当前请求的URL
+                if (string.IsNullOrEmpty(returnUrl))
+                {
+                    returnUrl = Request.UrlReferrer?.ToString() ?? Url.Action("Index", "Restaurants");
+                }
+                
+                return Redirect(returnUrl);
+            }
+            
+            var cartItem = cart.FirstOrDefault(c => c.DishId == dishId.Value);
+            
+            if (cartItem != null)
+            {
+                cartItem.Quantity += quantity;
             }
             else
             {
-                // 添加新项
                 cart.Add(new CartItem
                 {
-                    DishId = dish.DishId,
+                    DishId = dishId.Value,
                     DishName = dish.Name,
                     Quantity = quantity,
-                    UnitPrice = dish.Price,
+                    Price = dish.Price,
                     RestaurantId = dish.RestaurantId,
                     RestaurantName = dish.Restaurant.Name
                 });
             }
 
-            // 保存购物车
             Session["Cart"] = cart;
+            
+            // 返回Add视图
+            return View();
+        }
 
-            // 返回操作结果
+        // POST: Cart/Update
+        [HttpPost]
+        public ActionResult Update(int dishId, int quantity)
+        {
+            // 检查用户是否已登录
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != UserTypes.Customer)
+            {
+                // 未登录，重定向到登录页面
+                return RedirectToAction("Login", "Account", new { returnUrl = Request.Url.ToString() });
+            }
+
+            var cart = Session["Cart"] as List<CartItem>;
+            if (cart == null)
+            {
+                return HttpNotFound();
+            }
+
+            var cartItem = cart.FirstOrDefault(c => c.DishId == dishId);
+            if (cartItem != null)
+            {
+                if (quantity <= 0)
+            {
+                    cart.Remove(cartItem);
+                }
+                else
+                {
+                    cartItem.Quantity = quantity;
+                }
+            }
+
+                Session["Cart"] = cart;
             return RedirectToAction("Index");
         }
 
-        // POST: Cart/RemoveFromCart
+        // POST: Cart/Remove
         [HttpPost]
-        public ActionResult RemoveFromCart(int dishId)
+        public ActionResult Remove(int dishId)
         {
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(i => i.DishId == dishId);
-            if (item != null)
+            // 检查用户是否已登录
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != UserTypes.Customer)
             {
-                cart.Remove(item);
-                Session["Cart"] = cart;
+                // 未登录，重定向到登录页面
+                return RedirectToAction("Login", "Account", new { returnUrl = Request.Url.ToString() });
             }
+
+            var cart = Session["Cart"] as List<CartItem>;
+            if (cart != null)
+            {
+                var cartItem = cart.FirstOrDefault(c => c.DishId == dishId);
+                if (cartItem != null)
+                {
+                    cart.Remove(cartItem);
+                }
+            }
+
+            Session["Cart"] = cart;
             return RedirectToAction("Index");
         }
 
         // POST: Cart/Checkout
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Checkout()
         {
-            // 检查用户是否登录
-            if (Session["CustomerId"] == null)
+            // 检查用户是否已登录
+            if (Session["UserId"] == null || Session["UserType"] == null || Session["UserType"].ToString() != UserTypes.Customer)
             {
-                return RedirectToAction("Login", "Account");
+                // 未登录，重定向到登录页面
+                return RedirectToAction("Login", "Account", new { returnUrl = Request.Url.ToString() });
             }
 
-            var cart = GetCart();
-            if (cart.Count == 0)
+            var cart = Session["Cart"] as List<CartItem>;
+            if (cart == null || !cart.Any())
             {
-                ModelState.AddModelError("", "购物车为空，无法下单");
-                return View("Index", cart);
+                return RedirectToAction("Index");
             }
 
-            // 获取当前用户ID
-            int customerId = (int)Session["CustomerId"];
+            var customerId = (int)Session["UserId"];
+            var customer = db.Customers.Find(customerId);
             
-            // 获取餐厅ID（假设一次只能从一个餐厅下单）
-            int restaurantId = cart[0].RestaurantId;
-
-            // 创建订单
+            // 计算商品总价
+            decimal subtotal = cart.Sum(item => item.TotalPrice);
+            
+            // 固定配送费5元
+            decimal deliveryFee = 5.00M;
+            
+            // 订单总价 = 商品总价 + 配送费
+            decimal totalAmount = subtotal + deliveryFee;
+            
             var order = new Order
             {
                 CustomerId = customerId,
-                RestaurantId = restaurantId,
+                RestaurantId = cart.First().RestaurantId,
                 Status = OrderStatus.Pending,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                DeliveryAddress = customer.Address,
+                OrderNumber = GenerateOrderNumber(),
+                DeliveryFee = deliveryFee,
+                TotalAmount = totalAmount
             };
 
             db.Orders.Add(order);
             db.SaveChanges();
 
-            // 创建订单明细
             foreach (var item in cart)
             {
                 var orderDetail = new OrderDetail
@@ -142,31 +227,41 @@ namespace food_takeout.Controllers
                     OrderId = order.OrderId,
                     DishId = item.DishId,
                     Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
+                    Price = item.Price,
+                    Subtotal = item.Price * item.Quantity
                 };
                 db.OrderDetails.Add(orderDetail);
             }
 
             db.SaveChanges();
+            Session["Cart"] = null;
 
-            // 清空购物车
-            cart.Clear();
-            Session["Cart"] = cart;
-
-            // 重定向到订单详情页
             return RedirectToAction("Details", "Orders", new { id = order.OrderId });
         }
-    }
 
-    // 购物车项模型
-    public class CartItem
-    {
-        public int DishId { get; set; }
-        public string DishName { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public int RestaurantId { get; set; }
-        public string RestaurantName { get; set; }
-        public decimal TotalPrice { get { return Quantity * UnitPrice; } }
+        // 生成订单编号
+        private string GenerateOrderNumber()
+        {
+            // 生成格式：年月日时分秒+3位随机数
+            string orderNumber = DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(100, 999).ToString();
+            
+            // 确保订单号是唯一的
+            while (db.Orders.Any(o => o.OrderNumber == orderNumber))
+            {
+                orderNumber = DateTime.Now.ToString("yyyyMMddHHmmss") + new Random().Next(100, 999).ToString();
+                System.Threading.Thread.Sleep(10); // 稍等片刻以改变时间戳
+            }
+            
+            return orderNumber;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
 } 

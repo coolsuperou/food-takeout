@@ -1,74 +1,109 @@
+@using food_takeout.Models
+@using System.ComponentModel
 @model food_takeout.ViewModels.RegisterViewModel
 
 @{
-    ViewBag.Title = "用户注册";
+    ViewBag.Title = "注册";
 }
 
+<h2>@ViewBag.Title</h2>
+
 <div class="row">
-    <div class="col-md-6 col-md-offset-3">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h2 class="panel-title">用户注册</h2>
-            </div>
-            <div class="panel-body">
+    <div class="col-md-8">
+        <section id="registerForm">
                 @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
                 {
                     @Html.AntiForgeryToken()
+                <h4>创建新账号</h4>
                     <hr />
-                    @Html.ValidationSummary("", new { @class = "text-danger" })
+                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
                     <div class="form-group">
-                        @Html.LabelFor(m => m.Username, new { @class = "col-md-3 control-label" })
-                        <div class="col-md-9">
+                    @Html.LabelFor(m => m.Username, "用户名", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
                             @Html.TextBoxFor(m => m.Username, new { @class = "form-control" })
                             @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger" })
                         </div>
                     </div>
                     <div class="form-group">
-                        @Html.LabelFor(m => m.Password, new { @class = "col-md-3 control-label" })
-                        <div class="col-md-9">
+                    @Html.LabelFor(m => m.Password, "密码", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
                             @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
                             @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
                         </div>
                     </div>
                     <div class="form-group">
-                        @Html.LabelFor(m => m.ConfirmPassword, new { @class = "col-md-3 control-label" })
-                        <div class="col-md-9">
+                    @Html.LabelFor(m => m.ConfirmPassword, "确认密码", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
                             @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control" })
                             @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger" })
                         </div>
                     </div>
                     <div class="form-group">
-                        @Html.LabelFor(m => m.PhoneNumber, new { @class = "col-md-3 control-label" })
-                        <div class="col-md-9">
+                    @Html.LabelFor(m => m.PhoneNumber, "手机号码", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
                             @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control" })
                             @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger" })
                         </div>
                     </div>
                     <div class="form-group">
-                        @Html.LabelFor(m => m.Address, new { @class = "col-md-3 control-label" })
-                        <div class="col-md-9">
+                    @Html.LabelFor(m => m.Address, "地址", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
                             @Html.TextAreaFor(m => m.Address, new { @class = "form-control", rows = 3 })
                             @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="col-md-offset-3 col-md-9">
-                            <input type="submit" value="注册" class="btn btn-primary btn-block" />
-                        </div>
+                    @Html.LabelFor(m => m.UserType, "角色", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.DropDownListFor(m => m.UserType, 
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Value = UserTypes.Customer, Text = "顾客" },
+                                new SelectListItem { Value = UserTypes.Merchant, Text = "商家" },
+                                new SelectListItem { Value = UserTypes.Rider, Text = "骑手" }
+                            },
+                            "请选择角色",
+                            new { @class = "form-control", id = "roleSelect" })
+                        @Html.ValidationMessageFor(m => m.UserType, "", new { @class = "text-danger" })
                     </div>
-                }
-                <div class="form-group">
-                    <div class="col-md-offset-3 col-md-9">
-                        <p>
-                            已有账号? @Html.ActionLink("立即登录", "Login")
-                        </p>
+                        </div>
+                <div class="form-group" id="restaurantNameGroup" style="display: none;">
+                    @Html.LabelFor(m => m.RestaurantName, "餐厅名称", new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.TextBoxFor(m => m.RestaurantName, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.RestaurantName, "", new { @class = "text-danger" })
                     </div>
                 </div>
-            </div>
-        </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="submit" value="注册" class="btn btn-primary" />
+                    </div>
+                </div>
+                <p>
+                    @Html.ActionLink("已有账号？立即登录", "Login")
+                </p>
+            }
+        </section>
     </div>
 </div>
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function() {
+            function toggleRestaurantName() {
+                var selectedRole = $("#roleSelect").val();
+                if (selectedRole === "@UserTypes.Merchant") {
+                    $("#restaurantNameGroup").show();
+                    $("#RestaurantName").prop("required", true);
+                } else {
+                    $("#restaurantNameGroup").hide();
+                    $("#RestaurantName").prop("required", false);
+                }
+            }
+
+            $("#roleSelect").change(toggleRestaurantName);
+            toggleRestaurantName();
+        });
+    </script>
 } 

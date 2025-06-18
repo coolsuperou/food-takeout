@@ -4,48 +4,255 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - 餐饮外卖系统</title>
+    <title>@ViewBag.Title - 美味快送</title>
     @Styles.Render("~/Content/css")
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7f7f7;
+            --rider-color: #ffd166;
+            --accent-color: #6c5ce7;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .status-notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .status-success {
+            background-color: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+        .status-warning {
+            background-color: rgba(255, 193, 7, 0.9);
+            color: #212529;
+        }
+    </style>
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+    @{
+        // 检查是否是商家用户
+        bool isMerchant = Session["UserType"] != null && Session["UserType"].ToString() == food_takeout.Models.UserTypes.Merchant;
+        
+        // 获取餐厅状态
+        bool? restaurantIsActive = null;
+        if (isMerchant && Session["RestaurantStatus"] != null)
+        {
+            // 从Session获取状态
+            restaurantIsActive = (bool)Session["RestaurantStatus"];
+            System.Diagnostics.Debug.WriteLine($"_Layout: 从Session获取餐厅状态 - {(restaurantIsActive.Value ? "营业中" : "休息中")}");
+        }
+        else if (isMerchant && ViewBag.Restaurant != null)
+        {
+            try
+            {
+                // 如果Session中没有，尝试从ViewBag获取
+                dynamic restaurant = ViewBag.Restaurant;
+                restaurantIsActive = restaurant.IsActive;
+                
+                // 更新Session中的值，确保后续页面一致
+                Session["RestaurantStatus"] = restaurantIsActive;
+                System.Diagnostics.Debug.WriteLine($"_Layout: 从ViewBag获取餐厅状态 - {(restaurantIsActive.Value ? "营业中" : "休息中")}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"_Layout: 获取餐厅状态失败 - {ex.Message}");
+            }
+        }
+        
+        // 检查TempData中是否有状态通知
+        string statusNotification = null;
+        bool? notificationStatus = null;
+        
+        if (TempData["StatusNotification"] != null)
+        {
+            statusNotification = TempData["StatusNotification"].ToString();
+            
+            // 从通知中提取状态信息
+            if (statusNotification.Contains("营业中"))
+            {
+                notificationStatus = true;
+            }
+            else if (statusNotification.Contains("休息中"))
+            {
+                notificationStatus = false;
+            }
+            
+            // 如果通知中包含状态信息，优先使用它
+            if (notificationStatus.HasValue)
+            {
+                restaurantIsActive = notificationStatus;
+                Session["RestaurantStatus"] = notificationStatus;
+                System.Diagnostics.Debug.WriteLine($"_Layout: 从TempData获取餐厅状态 - {(notificationStatus.Value ? "营业中" : "休息中")}");
+            }
+        }
+    }
+    
+    @if (isMerchant && restaurantIsActive.HasValue)
+    {
+        <div class="status-notification @(restaurantIsActive.Value ? "status-success" : "status-warning")" id="restaurantStatusNotification">
+            <i class="bi @(restaurantIsActive.Value ? "bi-shop" : "bi-shop-window")"></i> 餐厅状态: @(restaurantIsActive.Value ? "营业中" : "休息中")
+            <button type="button" class="btn-close btn-close-white float-end" aria-label="Close" onclick="this.parentElement.style.display='none'"></button>
+        </div>
+    }
+
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            @Html.ActionLink("餐饮外卖系统", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="切换导航" aria-controls="navbarSupportedContent"
+            @Html.ActionLink("美味快送", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("主页", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("餐厅", "Index", "Restaurants", new { area = "" }, new { @class = "nav-link" })</li>
-                    @if (Session["CustomerId"] != null)
+            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    @if (Session["UserId"] != null)
                     {
-                        <li>@Html.ActionLink("点餐", "SelectRestaurant", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
-                        <li>@Html.ActionLink("我的订单", "MyOrders", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                        var userType = Session["UserType"] as string;
+                        if (userType == food_takeout.Models.UserTypes.Customer)
+                        {
+                            <li class="nav-item">@Html.ActionLink("首页", "Index", "Customer", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("餐厅", "Index", "Restaurants", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("我的订单", "MyOrders", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("Index", "Cart")" class="nav-link">
+                                    <i class="bi bi-cart-fill"></i> 购物车
+                                    <span id="cart-badge" class="badge bg-danger rounded-pill"></span>
+                                </a>
+                            </li>
+                        }
+                        else if (userType == food_takeout.Models.UserTypes.Merchant)
+                        {
+                            <li class="nav-item">@Html.ActionLink("仪表盘", "Dashboard", "Merchant", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("订单管理", "MerchantOrders", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("菜品管理", "ManageDishes", "Dishes", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("销售统计", "SalesStatistics", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                            if (restaurantIsActive.HasValue)
+                            {
+                                <li class="nav-item">
+                                    <span class="nav-link">
+                                        <i class="bi @(restaurantIsActive.Value ? "bi-shop text-success" : "bi-shop-window text-danger")"></i>
+                                        <span class="@(restaurantIsActive.Value ? "text-success" : "text-danger")">
+                                            @(restaurantIsActive.Value ? "营业中" : "休息中")
+                                        </span>
+                                    </span>
+                                </li>
+                            }
+                        }
+                        else if (userType == food_takeout.Models.UserTypes.Rider)
+                        {
+                            <li class="nav-item">@Html.ActionLink("首页", "Index", "Rider", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("待配送订单", "RiderOrders", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                            <li class="nav-item">@Html.ActionLink("配送历史", "DeliveryHistory", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                        }
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Home")">首页</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Restaurants")">餐厅</a>
+                        </li>
                     }
                     @if (Session["IsAdmin"] != null && (bool)Session["IsAdmin"])
                     {
-                        <li>@Html.ActionLink("菜品管理", "Index", "Dishes", new { area = "" }, new { @class = "nav-link" })</li>
-                        <li>@Html.ActionLink("用户管理", "Index", "Customers", new { area = "" }, new { @class = "nav-link" })</li>
-                        <li>@Html.ActionLink("所有订单", "Index", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li class="nav-item">@Html.ActionLink("用户管理", "Index", "Customers", new { area = "" }, new { @class = "nav-link" })</li>
+                        <li class="nav-item">@Html.ActionLink("所有订单", "Index", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
                     }
                 </ul>
                 @Html.Partial("_LoginPartial")
             </div>
         </div>
     </nav>
-    <div class="container body-content">
+    @{
+        var isFluidLayout = ViewContext.RouteData.Values["controller"].ToString() == "Dishes" && 
+                            ViewContext.RouteData.Values["action"].ToString() == "ManageDishes" ||
+                            ViewContext.RouteData.Values["controller"].ToString() == "Orders" && 
+                            ViewContext.RouteData.Values["action"].ToString() == "MerchantOrders";
+    }
+    <div class="@(isFluidLayout ? "container-fluid" : "container") py-4">
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - 餐饮外卖系统</p>
-        </footer>
     </div>
+
+    <footer class="bg-dark text-white py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5>美味快送</h5>
+                    <p>专业的餐饮外卖系统解决方案，为餐厅、顾客和骑手提供便捷服务。</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">联系电话: 400-123-4567</p>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center">
+                <p class="mb-0">&copy; @DateTime.Now.Year - 美味快送 - 餐饮外卖系统. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    
+    <script>
+        // 自动隐藏顶部状态通知栏
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.status-notification').fadeOut('slow');
+            }, 5000);
+        });
+    </script>
+    
     @RenderSection("scripts", required: false)
 </body>
 </html>

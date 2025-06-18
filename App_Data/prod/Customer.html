@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美味快送 - 顾客中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7f7f7;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .user-welcome {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section-header {
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+        .restaurant-card {
+            position: relative;
+        }
+        .restaurant-card img {
+            height: 150px;
+            object-fit: cover;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .restaurant-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .order-status {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-preparing {
+            background-color: #ffc107;
+        }
+        .status-delivering {
+            background-color: #0d6efd;
+        }
+        .status-completed {
+            background-color: #198754;
+        }
+        .cart-badge {
+            position: relative;
+        }
+        .cart-badge .badge {
+            position: absolute;
+            top: -8px;
+            right: -10px;
+        }
+        .rating {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-bicycle"></i> 美味快送
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-house"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-shop"></i> 餐厅</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="bi bi-list-check"></i> 我的订单</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <a href="#" class="position-relative me-3 cart-badge">
+                        <i class="bi bi-cart fs-5"></i>
+                        <span class="badge bg-danger rounded-pill">3</span>
+                    </a>
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="/Content/Images/placeholders/32/user.png" alt="用户头像" class="rounded-circle me-2" width="32" height="32">
+                            <span>张先生</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> 个人资料</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-geo-alt"></i> 收货地址</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-star"></i> 我的评价</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <!-- 欢迎区 -->
+        <div class="user-welcome">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2><i class="bi bi-hand-thumbs-up"></i> 您好，张先生！</h2>
+                    <p class="mb-0">欢迎回来，今天想吃点什么？</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <button class="btn btn-light"><i class="bi bi-geo-alt"></i> 北京市朝阳区建国路88号</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷功能区 -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-shop fs-1 text-primary"></i>
+                        <h5 class="mt-2">附近餐厅</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-clock-history fs-1 text-primary"></i>
+                        <h5 class="mt-2">历史订单</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-star fs-1 text-primary"></i>
+                        <h5 class="mt-2">我的收藏</h5>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card text-center p-3">
+                    <div class="card-body">
+                        <i class="bi bi-gift fs-1 text-primary"></i>
+                        <h5 class="mt-2">优惠券</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进行中的订单 -->
+        <div class="mb-5">
+            <h3 class="section-header">我的订单</h3>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="/Content/Images/placeholders/80/restaurant.png" class="img-fluid rounded" alt="餐厅Logo">
+                        </div>
+                        <div class="col-md-4">
+                            <h5>老王牛肉面</h5>
+                            <p class="text-muted mb-1">牛肉面 x 1，饺子 x 10</p>
+                            <p class="text-muted mb-0">总价：¥35.00</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="order-status status-delivering"></span>
+                                <span>配送中</span>
+                            </div>
+                            <p class="text-muted mb-0">预计送达：今天 12:30</p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="#" class="btn btn-primary btn-sm mb-2 w-100">查看详情</a>
+                            <a href="#" class="btn btn-outline-primary btn-sm w-100">追踪配送</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="/Content/Images/placeholders/80/restaurant.png" class="img-fluid rounded" alt="餐厅Logo">
+                        </div>
+                        <div class="col-md-4">
+                            <h5>肯德基</h5>
+                            <p class="text-muted mb-1">香辣鸡腿堡套餐 x 2</p>
+                            <p class="text-muted mb-0">总价：¥66.00</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="order-status status-preparing"></span>
+                                <span>准备中</span>
+                            </div>
+                            <p class="text-muted mb-0">预计送达：今天 12:45</p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="#" class="btn btn-primary btn-sm mb-2 w-100">查看详情</a>
+                            <a href="#" class="btn btn-outline-danger btn-sm w-100">取消订单</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="#" class="btn btn-outline-primary">查看全部订单 <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+
+        <!-- 附近餐厅 -->
+        <div class="mb-5">
+            <h3 class="section-header">附近餐厅</h3>
+            <div class="row g-4">
+                <div class="col-md-3 col-6">
+                    <div class="card restaurant-card">
+                        <span class="badge bg-danger restaurant-badge">热门</span>
+                        <img src="/Content/Images/placeholders/80/restaurant.png" class="card-img-top" alt="餐厅图片">
+                        <div class="card-body">
+                            <h5 class="card-title">川湘菜馆</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-half"></i>
+                                    <span class="text-muted">4.5</span>
+                                </div>
+                                <small class="text-muted">30分钟</small>
+                            </div>
+                            <p class="card-text text-muted">川菜, 湘菜</p>
+                            <a href="#" class="btn btn-primary btn-sm">去点餐</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card restaurant-card">
+                        <img src="/Content/Images/placeholders/80/restaurant.png" class="card-img-top" alt="餐厅图片">
+                        <div class="card-body">
+                            <h5 class="card-title">披萨汇</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star"></i>
+                                    <span class="text-muted">4.0</span>
+                                </div>
+                                <small class="text-muted">40分钟</small>
+                            </div>
+                            <p class="card-text text-muted">意大利菜, 披萨</p>
+                            <a href="#" class="btn btn-primary btn-sm">去点餐</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card restaurant-card">
+                        <span class="badge bg-success restaurant-badge">新店</span>
+                        <img src="/Content/Images/placeholders/80/restaurant.png" class="card-img-top" alt="餐厅图片">
+                        <div class="card-body">
+                            <h5 class="card-title">日式料理店</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <span class="text-muted">5.0</span>
+                                </div>
+                                <small class="text-muted">35分钟</small>
+                            </div>
+                            <p class="card-text text-muted">日料, 寿司</p>
+                            <a href="#" class="btn btn-primary btn-sm">去点餐</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card restaurant-card">
+                        <img src="/Content/Images/placeholders/80/restaurant.png" class="card-img-top" alt="餐厅图片">
+                        <div class="card-body">
+                            <h5 class="card-title">麦当劳</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="rating">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-half"></i>
+                                    <i class="bi bi-star"></i>
+                                    <span class="text-muted">3.5</span>
+                                </div>
+                                <small class="text-muted">25分钟</small>
+                            </div>
+                            <p class="card-text text-muted">快餐, 汉堡</p>
+                            <a href="#" class="btn btn-primary btn-sm">去点餐</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-outline-primary">查看更多餐厅 <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+
+        <!-- 为您推荐 -->
+        <div class="mb-5">
+            <h3 class="section-header">为您推荐</h3>
+            <div class="row g-4">
+                <div class="col-md-3 col-6">
+                    <div class="card">
+                        <img src="/Content/Images/placeholders/500/food.png" class="card-img-top" alt="菜品图片" style="height: 120px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">沙拉套餐</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-danger">¥32.00</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> 加入购物车</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card">
+                        <img src="/Content/Images/placeholders/500/food.png" class="card-img-top" alt="菜品图片" style="height: 120px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">巨无霸汉堡</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-danger">¥25.00</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> 加入购物车</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card">
+                        <img src="/Content/Images/placeholders/500/food.png" class="card-img-top" alt="菜品图片" style="height: 120px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">牛肉炒面</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-danger">¥28.00</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> 加入购物车</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card">
+                        <img src="/Content/Images/placeholders/500/food.png" class="card-img-top" alt="菜品图片" style="height: 120px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">水果拼盘</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-danger">¥18.00</span>
+                                <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus"></i> 加入购物车</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 配送骑手跟踪模态框 -->
+    <div class="modal fade" id="deliveryTrackingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">配送跟踪</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="map-delivery-tracking p-3 bg-white mb-3">
+                                <img src="https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+555555(121.5,31.2),pin-s+ff6b6b(121.52,31.22)/121.51,31.21,14,0/600x400?access_token=pk.eyJ1IjoiZXhhbXBsZXVzZXIiLCJhIjoiY2xxxxx" class="img-fluid" alt="地图配送跟踪演示">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="/Content/Images/placeholders/50/rider.png" class="rounded-circle me-3" alt="骑手头像">
+                                        <div>
+                                            <h5 class="mb-1">李师傅</h5>
+                                            <div class="rating">
+                                                <i class="bi bi-star-fill"></i>
+                                                <i class="bi bi-star-fill"></i>
+                                                <i class="bi bi-star-fill"></i>
+                                                <i class="bi bi-star-fill"></i>
+                                                <i class="bi bi-star-half"></i>
+                                                <span>4.8</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="mb-1"><i class="bi bi-telephone"></i> 138****5678</p>
+                                    <button class="btn btn-sm btn-primary w-100 mt-2">联系骑手</button>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>配送进度</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="d-flex mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <div>
+                                                <p class="mb-0">商家已接单</p>
+                                                <small class="text-muted">12:05</small>
+                                            </div>
+                                        </li>
+                                        <li class="d-flex mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <div>
+                                                <p class="mb-0">骑手已取餐</p>
+                                                <small class="text-muted">12:15</small>
+                                            </div>
+                                        </li>
+                                        <li class="d-flex mb-2">
+                                            <i class="bi bi-circle-fill text-primary me-2"></i>
+                                            <div>
+                                                <p class="mb-0">正在配送中</p>
+                                                <small class="text-muted">预计12:30送达</small>
+                                            </div>
+                                        </li>
+                                        <li class="d-flex">
+                                            <i class="bi bi-circle me-2"></i>
+                                            <div>
+                                                <p class="mb-0">已送达</p>
+                                                <small class="text-muted">-</small>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5>美味快送</h5>
+                    <p>专业的餐饮外卖系统解决方案，为餐厅、顾客和骑手提供便捷服务。</p>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5>联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope"></i> contact@meiwkuaisong.com</li>
+                        <li><i class="bi bi-telephone"></i> 400-123-4567</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>关注我们</h5>
+                    <div class="d-flex">
+                        <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="#" class="text-white me-3"><i class="bi bi-twitter fs-5"></i></a>
+                        <a href="#" class="text-white me-3"><i class="bi bi-instagram fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-wechat fs-5"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 美味快送 - 餐饮外卖系统. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 示例脚本 - 配送跟踪模态框
+        document.addEventListener('DOMContentLoaded', function() {
+            var trackButtons = document.querySelectorAll('.btn-outline-primary');
+            trackButtons.forEach(function(btn) {
+                if (btn.innerHTML.includes('追踪配送')) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var deliveryModal = new bootstrap.Modal(document.getElementById('deliveryTrackingModal'));
+                        deliveryModal.show();
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

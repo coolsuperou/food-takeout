@@ -1,0 +1,99 @@
+@model IEnumerable<food_takeout.Models.Order>
+@using food_takeout.Models
+
+@{
+    ViewBag.Title = "待配送订单";
+}
+
+<h2>待配送订单</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="alert alert-info">
+    <p><strong>提示：</strong> 在骑手中心页面可以查看更多订单详情和操作。</p>
+    <p><a href="@Url.Action("Index", "Rider")" class="btn btn-primary">返回骑手中心</a></p>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>订单编号</th>
+            <th>餐厅</th>
+            <th>顾客</th>
+            <th>配送地址</th>
+            <th>订单状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.OrderNumber</td>
+                <td>@(order.Restaurant != null ? order.Restaurant.Name : "未知餐厅")</td>
+                <td>@(order.Customer != null ? order.Customer.Username : "未知顾客")</td>
+                <td>@order.DeliveryAddress</td>
+                <td>
+                    @{
+                        string statusClass = "";
+                        switch (order.Status)
+                        {
+                            case food_takeout.Models.OrderStatus.Pending:
+                                statusClass = "badge bg-warning text-dark";
+                                break;
+                            case food_takeout.Models.OrderStatus.Preparing:
+                                statusClass = "badge bg-info text-white";
+                                break;
+                            case food_takeout.Models.OrderStatus.ReadyForDelivery:
+                                statusClass = "badge bg-primary";
+                                break;
+                            case food_takeout.Models.OrderStatus.InDelivery:
+                                statusClass = "badge bg-primary";
+                                break;
+                            case food_takeout.Models.OrderStatus.Delivered:
+                                statusClass = "badge bg-success";
+                                break;
+                            case food_takeout.Models.OrderStatus.Cancelled:
+                                statusClass = "badge bg-danger";
+                                break;
+                        }
+                    }
+                    <span class="@statusClass">@order.Status.ToString()</span>
+                </td>
+                <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    @if (order.Status == food_takeout.Models.OrderStatus.ReadyForDelivery)
+                    {
+                        using (Html.BeginForm("TakeOrder", "Orders", new { id = order.OrderId }, FormMethod.Post, new { style = "display: inline;" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-success btn-sm">接单</button>
+                        }
+                    }
+                    else if (order.Status == food_takeout.Models.OrderStatus.InDelivery && order.RiderId == (int)Session["UserId"])
+                    {
+                        using (Html.BeginForm("CompleteDelivery", "Orders", new { id = order.OrderId }, FormMethod.Post, new { style = "display: inline;" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-primary btn-sm">完成配送</button>
+                        }
+                    }
+                    <a href="@Url.Action("Details", "Orders", new { id = order.OrderId })" class="btn btn-info btn-sm">查看详情</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table> 

@@ -1,78 +1,110 @@
 @model food_takeout.Models.Dish
+@using food_takeout.Models
 
 @{
     ViewBag.Title = "编辑菜品";
 }
 
-<h2>编辑菜品</h2>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> 编辑菜品</h4>
+                </div>
+                <div class="card-body">
+                    @using (Html.BeginForm("Edit", "Dishes", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        @Html.HiddenFor(model => model.Id)
 
-@using (Html.BeginForm("Edit", "Dishes", FormMethod.Post, new { enctype = "multipart/form-data" }))
-{
-    @Html.AntiForgeryToken()
-    
-    <div class="form-horizontal">
-        <hr />
-        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-        @Html.HiddenFor(model => model.DishId)
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    @Html.LabelFor(model => model.Name, new { @class = "form-label" })
+                                    <span class="text-danger">*</span>
+                                    @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control", placeholder = "请输入菜品名称" } })
+                                    @Html.ValidationMessageFor(model => model.Name, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    @Html.LabelFor(model => model.Price, new { @class = "form-label" })
+                                    <span class="text-danger">*</span>
+                                    @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", placeholder = "请输入价格", type = "number", step = "0.01", min = "0" } })
+                                    @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.RestaurantId, "餐厅", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.DropDownList("RestaurantId", null, htmlAttributes: new { @class = "form-control" })
-                @Html.ValidationMessageFor(model => model.RestaurantId, "", new { @class = "text-danger" })
-            </div>
-        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    @Html.LabelFor(model => model.Category, new { @class = "form-label" })
+                                    <select class="form-select" id="Category" name="Category">
+                                        <option value="" @(string.IsNullOrEmpty(Model.Category) ? "selected" : "")>选择分类</option>
+                                        <option value="热菜" @(Model.Category == "热菜" ? "selected" : "")>热菜</option>
+                                        <option value="凉菜" @(Model.Category == "凉菜" ? "selected" : "")>凉菜</option>
+                                        <option value="主食" @(Model.Category == "主食" ? "selected" : "")>主食</option>
+                                        <option value="汤类" @(Model.Category == "汤类" ? "selected" : "")>汤类</option>
+                                        <option value="小吃" @(Model.Category == "小吃" ? "selected" : "")>小吃</option>
+                                        <option value="饮品" @(Model.Category == "饮品" ? "selected" : "")>饮品</option>
+                                    </select>
+                                    @Html.ValidationMessageFor(model => model.Category, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label d-block">设置</label>
+                                <div class="form-check form-check-inline">
+                                    @Html.CheckBoxFor(model => model.IsHot, new { @class = "form-check-input" })
+                                    <label class="form-check-label" for="IsHot">热销菜品</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <select class="form-select" id="Status" name="Status">
+                                        <option value="Active" @(Model.Status == "Active" ? "selected" : "")>上架销售</option>
+                                        <option value="Inactive" @(Model.Status == "Inactive" ? "selected" : "")>下架</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.Name, "菜品名称", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Name, "", new { @class = "text-danger" })
-            </div>
-        </div>
+                        <div class="form-group mb-3">
+                            @Html.LabelFor(model => model.Description, new { @class = "form-label" })
+                            @Html.TextAreaFor(model => model.Description, new { @class = "form-control", rows = "3", placeholder = "请输入菜品描述" })
+                            @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+                        </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.Price, "价格", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
-            </div>
-        </div>
+                        <div class="form-group mb-3">
+                            @Html.LabelFor(model => model.ImageUrl, new { @class = "form-label" })
+                            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                            {
+                                <div class="mb-2">
+                                    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-thumbnail" style="max-width: 200px; max-height: 200px;" />
+                                </div>
+                            }
+                            <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                            @Html.HiddenFor(model => model.ImageUrl)
+                            <div class="form-text">如需更换图片请上传，否则保留原图</div>
+                            @Html.ValidationMessageFor(model => model.ImageUrl, "", new { @class = "text-danger" })
+                        </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.ImageUrl, "菜品图片", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                {
-                    <div style="margin-bottom: 10px;">
-                        <img src="@Model.ImageUrl" alt="菜品图片" style="max-width: 200px; max-height: 200px;" />
-                    </div>
-                }
-                <input type="file" name="imageFile" id="imageFile" class="form-control" />
-                <span class="text-muted">如不上传新图片，则保留原图</span>
-                @Html.HiddenFor(model => model.ImageUrl)
-                @Html.ValidationMessageFor(model => model.ImageUrl, "", new { @class = "text-danger" })
-            </div>
-        </div>
+                        <div class="form-group mb-3">
+                            @Html.LabelFor(model => model.SoldCount, new { @class = "form-label" })
+                            @Html.EditorFor(model => model.SoldCount, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                            <div class="form-text">此数据系统自动统计，不可手动修改</div>
+                        </div>
 
-        <div class="form-group">
-            @Html.LabelFor(model => model.IsAvailable, "是否可用", htmlAttributes: new { @class = "control-label col-md-2" })
-            <div class="col-md-10">
-                <div class="checkbox">
-                    @Html.EditorFor(model => model.IsAvailable)
-                    @Html.ValidationMessageFor(model => model.IsAvailable, "", new { @class = "text-danger" })
+                        <div class="form-group text-end">
+                            <a href="@Url.Action("ManageDishes")" class="btn btn-secondary me-2">取消</a>
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
-
-        <div class="form-group">
-            <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="保存" class="btn btn-primary" />
-                @Html.ActionLink("返回列表", "Index", null, new { @class = "btn btn-default" })
-            </div>
-        </div>
     </div>
-}
+</div>
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")

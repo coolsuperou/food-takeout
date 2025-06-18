@@ -1,0 +1,684 @@
+@model IEnumerable<food_takeout.Models.Order>
+@using food_takeout.Models
+
+@{
+    ViewBag.Title = "订单管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- 主内容区 -->
+        <div class="col-md-12 px-md-4 py-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="bi bi-receipt"></i> 订单管理</h2>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="@Url.Action("ExportOrdersReport", "Orders", new { filter = ViewBag.Status ?? "all", keyword = ViewBag.Keyword })" class="btn btn-sm btn-outline-secondary" id="exportPdf">
+                            <i class="bi bi-file-pdf"></i> 导出PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- 订单统计卡片 -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-subtitle mb-2">待处理订单</h6>
+                                    <h3 class="card-title mb-0">@Model.Count(o => o.Status == food_takeout.Models.OrderStatus.Pending)单</h3>
+                                </div>
+                                <div class="fs-1 opacity-25">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-subtitle mb-2">处理中订单</h6>
+                                    <h3 class="card-title mb-0">@Model.Count(o => o.Status == food_takeout.Models.OrderStatus.Preparing || o.Status == food_takeout.Models.OrderStatus.ReadyForDelivery)单</h3>
+                                </div>
+                                <div class="fs-1 opacity-25">
+                                    <i class="bi bi-gear"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-subtitle mb-2">已完成订单</h6>
+                                    <h3 class="card-title mb-0">@Model.Count(o => o.Status == food_takeout.Models.OrderStatus.Delivered)单</h3>
+                                </div>
+                                <div class="fs-1 opacity-25">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-subtitle mb-2">已取消订单</h6>
+                                    <h3 class="card-title mb-0">@Model.Count(o => o.Status == food_takeout.Models.OrderStatus.Cancelled)单</h3>
+                                </div>
+                                <div class="fs-1 opacity-25">
+                                    <i class="bi bi-x-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选区域 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form id="searchForm" method="get" action="@Url.Action("MerchantOrders", "Orders")" class="needs-validation" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" id="searchOrder" name="keyword" placeholder="搜索订单号/顾客" value="@ViewBag.Keyword">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="bi bi-search"></i> 搜索
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="d-flex flex-wrap gap-2">
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "all", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "all" || string.IsNullOrEmpty(ViewBag.Status) ? "btn-secondary" : "btn-outline-secondary") filter-btn" data-status="all">全部</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "pending", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "pending" ? "btn-warning" : "btn-outline-warning") filter-btn" data-status="pending">待处理</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "preparing", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "preparing" ? "btn-info" : "btn-outline-info") filter-btn" data-status="preparing">制作中</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "ready", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "ready" ? "btn-primary" : "btn-outline-primary") filter-btn" data-status="ready">待配送</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "delivery", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "delivery" ? "btn-info" : "btn-outline-info") filter-btn" data-status="delivery">配送中</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "completed", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "completed" ? "btn-success" : "btn-outline-success") filter-btn" data-status="completed">已完成</a>
+                                    <a href="@Url.Action("MerchantOrders", "Orders", new { status = "cancelled", keyword = ViewBag.Keyword })" class="btn @(ViewBag.Status == "cancelled" ? "btn-danger" : "btn-outline-danger") filter-btn" data-status="cancelled">已取消</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 订单列表 -->
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">订单列表</h5>
+                    <span class="badge bg-secondary">共 @Model.Count() 条记录</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>订单编号</th>
+                                    <th>顾客</th>
+                                    <th>金额</th>
+                                    <th>商家收入</th>
+                                    <th>订单时间</th>
+                                    <th>状态</th>
+                                    <th>骑手</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in Model)
+                                {
+                                    string statusClass = "";
+                                    string statusIcon = "";
+                                    string dataStatus = "";
+                                    
+                                    switch (order.Status)
+                                    {
+                                        case food_takeout.Models.OrderStatus.Pending:
+                                            statusClass = "bg-warning text-dark";
+                                            statusIcon = "hourglass-split";
+                                            dataStatus = "pending";
+                                            break;
+                                        case food_takeout.Models.OrderStatus.Preparing:
+                                            statusClass = "bg-info text-white";
+                                            statusIcon = "gear";
+                                            dataStatus = "preparing";
+                                            break;
+                                        case food_takeout.Models.OrderStatus.ReadyForDelivery:
+                                            statusClass = "bg-primary";
+                                            statusIcon = "box-seam";
+                                            dataStatus = "ready";
+                                            break;
+                                        case food_takeout.Models.OrderStatus.InDelivery:
+                                            statusClass = "bg-info";
+                                            statusIcon = "bicycle";
+                                            dataStatus = "delivery";
+                                            break;
+                                        case food_takeout.Models.OrderStatus.Delivered:
+                                            statusClass = "bg-success";
+                                            statusIcon = "check-circle";
+                                            dataStatus = "completed";
+                                            break;
+                                        case food_takeout.Models.OrderStatus.Cancelled:
+                                            statusClass = "bg-danger";
+                                            statusIcon = "x-circle";
+                                            dataStatus = "cancelled";
+                                            break;
+                                    }
+
+                                    <tr class="order-item" data-status="@dataStatus" data-id="@order.OrderId">
+                                        <td><strong>@order.OrderNumber</strong></td>
+                                        <td>@order.Customer.Username</td>
+                                        <td class="text-danger fw-bold">¥@order.TotalAmount.ToString("F2")</td>
+                                        <td class="text-success fw-bold">¥@order.MerchantRevenue.ToString("F2")</td>
+                                        <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            <span class="badge @statusClass">
+                                                <i class="bi bi-@statusIcon me-1"></i> @order.Status.GetDisplayName()
+                                            </span>
+                                        </td>
+                                        <td>@(order.Rider?.Name ?? "未分配")</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="@Url.Action("Details", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-eye"></i> 查看
+                                                </a>
+                                                
+                                                @* 基于订单状态显示适当的操作按钮 *@
+                                                @if (order.Status == food_takeout.Models.OrderStatus.Pending)
+                                                {
+                                                    <a href="@Url.Action("AcceptOrderGet", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-success accept-order-btn" data-order-id="@order.OrderId">
+                                                        <i class="bi bi-check-lg"></i> 接单
+                                                    </a>
+                                                    <a href="@Url.Action("RejectOrderGet", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-danger reject-order-btn" data-order-id="@order.OrderId">
+                                                        <i class="bi bi-x-lg"></i> 拒单
+                                                    </a>
+                                                }
+                                                @if (order.Status == food_takeout.Models.OrderStatus.Preparing)
+                                                {
+                                                    <a href="@Url.Action("MarkAsReadyGet", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-primary mark-ready-btn" data-order-id="@order.OrderId">
+                                                        <i class="bi bi-box-seam"></i> 已出餐
+                                                    </a>
+                                                    <a href="@Url.Action("CancelOrderGet", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-danger cancel-order-btn" data-order-id="@order.OrderId">
+                                                        <i class="bi bi-x-circle"></i> 取消
+                                                    </a>
+                                                }
+                                                @if (order.Status == food_takeout.Models.OrderStatus.ReadyForDelivery)
+                                                {
+                                                    <a href="@Url.Action("CancelOrderGet", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-danger cancel-order-btn" data-order-id="@order.OrderId">
+                                                        <i class="bi bi-x-circle"></i> 取消
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 订单详情模态框 -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">订单详情 <span id="orderNumber"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">加载中...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <div id="orderActions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // 绑定事件处理器
+            function bindEventHandlers() {
+                // 处理接单按钮点击
+                $('.accept-order-btn').off('click').click(function(e) {
+                    e.preventDefault(); // 阻止默认行为
+                    var orderId = $(this).data('order-id');
+                    
+                    if (confirm('确定要接受此订单吗？')) {
+                        // 显示加载状态
+                        $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                        $(this).prop('disabled', true);
+                        
+                        // 发送AJAX请求
+                        $.ajax({
+                            url: '@Url.Action("AcceptOrderGet", "Orders")/' + orderId,
+                            type: 'GET',
+                            success: function(result) {
+                                // 操作成功，刷新页面
+                                location.reload();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('操作失败，请重试: ' + error);
+                                // 恢复按钮状态
+                                $('.accept-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-check-lg"></i> 接单');
+                                $('.accept-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+                
+                // 处理拒绝订单按钮点击
+                $('.reject-order-btn').off('click').click(function(e) {
+                    e.preventDefault(); // 阻止默认行为
+                    var orderId = $(this).data('order-id');
+                    
+                    if (confirm('确定要拒绝此订单吗？')) {
+                        // 显示加载状态
+                        $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                        $(this).prop('disabled', true);
+                        
+                        // 发送AJAX请求
+                        $.ajax({
+                            url: '@Url.Action("RejectOrderGet", "Orders")/' + orderId,
+                            type: 'GET',
+                            success: function(result) {
+                                // 操作成功，刷新页面
+                                location.reload();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('操作失败，请重试: ' + error);
+                                // 恢复按钮状态
+                                $('.reject-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-x-lg"></i> 拒单');
+                                $('.reject-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+                
+                // 处理标记已出餐按钮点击
+                $('.mark-ready-btn').off('click').click(function(e) {
+                    e.preventDefault(); // 阻止默认行为
+                    var orderId = $(this).data('order-id');
+                    
+                    if (confirm('确定要将此订单标记为已出餐吗？')) {
+                        // 显示加载状态
+                        $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                        $(this).prop('disabled', true);
+                        
+                        // 发送AJAX请求
+                        $.ajax({
+                            url: '@Url.Action("MarkAsReadyGet", "Orders")/' + orderId,
+                            type: 'GET',
+                            success: function(result) {
+                                // 操作成功，刷新页面
+                                location.reload();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('操作失败，请重试: ' + error);
+                                // 恢复按钮状态
+                                $('.mark-ready-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-box-seam"></i> 已出餐');
+                                $('.mark-ready-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+                
+                // 处理取消订单按钮点击
+                $('.cancel-order-btn').off('click').click(function(e) {
+                    e.preventDefault(); // 阻止默认行为
+                    var orderId = $(this).data('order-id');
+                    
+                    if (confirm('确定要取消此订单吗？此操作不可恢复！')) {
+                        // 显示加载状态
+                        $(this).html('<i class="spinner-border spinner-border-sm"></i> 处理中...');
+                        $(this).prop('disabled', true);
+                        
+                        // 发送AJAX请求
+                        $.ajax({
+                            url: '@Url.Action("CancelOrderGet", "Orders")/' + orderId,
+                            type: 'GET',
+                            success: function(result) {
+                                // 操作成功，刷新页面
+                                location.reload();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('操作失败，请重试: ' + error);
+                                // 恢复按钮状态
+                                $('.cancel-order-btn[data-order-id="' + orderId + '"]').html('<i class="bi bi-x-circle"></i> 取消订单');
+                                $('.cancel-order-btn[data-order-id="' + orderId + '"]').prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // 初始化
+            bindEventHandlers();
+
+            // 自动关闭提示框
+            setTimeout(function () {
+                $('.alert:not(.refresh-alert)').alert('close');
+            }, 5000);
+
+            // 搜索输入框处理
+            $('#searchOrder').on('keyup', function(e) {
+                // 按回车键提交表单
+                if (e.key === 'Enter') {
+                    $('#searchForm').submit();
+                }
+                
+                // 或者可以添加自动完成/建议功能（可选）
+                // 这里不再处理前端筛选，而是提示用户按下回车以提交搜索
+                var value = $(this).val();
+                if (value.length > 0) {
+                    // 如果需要，可以在这里添加自动完成功能
+                }
+            });
+
+            // 查看订单详情
+            $('.view-details').click(function () {
+                var orderId = $(this).data('id');
+                $('#orderDetailModal').modal('show');
+                $('#orderNumber').text('#' + orderId);
+                
+                // 加载订单详情
+                $.ajax({
+                    url: '@Url.Action("Details", "Orders")/' + orderId,
+                    type: 'GET',
+                    success: function (data) {
+                        // 提取订单详情内容
+                        var detailsContent = $(data).find('.container').html();
+                        $('#orderDetailModal .modal-body').html(detailsContent);
+                        
+                        // 更新订单号
+                        var orderNumber = $(data).find('#orderNumber').text();
+                        $('#orderNumber').text(orderNumber);
+                        
+                        // 更新操作按钮
+                        var status = $(data).find('#orderStatus').data('status');
+                        var actionsHtml = '';
+                        
+                        // 基于订单状态显示适当的操作按钮
+                        if (status === 'Pending') {
+                            // 待处理订单显示接单拒单按钮
+                            actionsHtml = `
+                                <button type="button" class="btn btn-success accept-modal-btn" data-order-id="${orderId}">
+                                    <i class="bi bi-check-lg"></i> 接受订单
+                                </button>
+                                <button type="button" class="btn btn-danger reject-modal-btn" data-order-id="${orderId}">
+                                    <i class="bi bi-x-lg"></i> 拒绝订单
+                                </button>
+                            `;
+                        } else if (status === 'Preparing') {
+                            // 制作中订单显示出餐和取消按钮
+                            actionsHtml = `
+                                <button type="button" class="btn btn-primary mark-ready-modal-btn" data-order-id="${orderId}">
+                                    <i class="bi bi-box-seam"></i> 标记已出餐
+                                </button>
+                                <button type="button" class="btn btn-danger cancel-modal-btn" data-order-id="${orderId}">
+                                    <i class="bi bi-x-circle"></i> 取消订单
+                                </button>
+                            `;
+                        } else if (status === 'ReadyForDelivery') {
+                            // 待配送订单只显示取消按钮
+                            actionsHtml = `
+                                <button type="button" class="btn btn-danger cancel-modal-btn" data-order-id="${orderId}">
+                                    <i class="bi bi-x-circle"></i> 取消订单
+                                </button>
+                            `;
+                        } else {
+                            // 其他状态不显示操作按钮
+                            actionsHtml = '';
+                        }
+                        
+                        $('#orderActions').html(actionsHtml);
+                        
+                        // 绑定模态框中的按钮事件
+                        $('.accept-modal-btn').click(function() {
+                            var modalOrderId = $(this).data('order-id');
+                            if (confirm('确定要接受此订单吗？')) {
+                                $.ajax({
+                                    url: '@Url.Action("AcceptOrderGet", "Orders")/' + modalOrderId,
+                                    type: 'GET',
+                                    success: function() {
+                                        $('#orderDetailModal').modal('hide');
+                                        location.reload();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        alert('操作失败，请重试: ' + error);
+                                    }
+                                });
+                            }
+                        });
+                        
+                        $('.reject-modal-btn').click(function() {
+                            var modalOrderId = $(this).data('order-id');
+                            if (confirm('确定要拒绝此订单吗？')) {
+                                $.ajax({
+                                    url: '@Url.Action("RejectOrderGet", "Orders")/' + modalOrderId,
+                                    type: 'GET',
+                                    success: function() {
+                                        $('#orderDetailModal').modal('hide');
+                                        location.reload();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        alert('操作失败，请重试: ' + error);
+                                    }
+                                });
+                            }
+                        });
+                        
+                        $('.mark-ready-modal-btn').click(function() {
+                            var modalOrderId = $(this).data('order-id');
+                            if (confirm('确定要将此订单标记为已出餐吗？')) {
+                                $.ajax({
+                                    url: '@Url.Action("MarkAsReadyGet", "Orders")/' + modalOrderId,
+                                    type: 'GET',
+                                    success: function() {
+                                        $('#orderDetailModal').modal('hide');
+                                        location.reload();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        alert('操作失败，请重试: ' + error);
+                                    }
+                                });
+                            }
+                        });
+                        
+                        $('.cancel-modal-btn').click(function() {
+                            var modalOrderId = $(this).data('order-id');
+                            if (confirm('确定要取消此订单吗？此操作不可恢复！')) {
+                                $.ajax({
+                                    url: '@Url.Action("CancelOrderGet", "Orders")/' + modalOrderId,
+                                    type: 'GET',
+                                    success: function() {
+                                        $('#orderDetailModal').modal('hide');
+                                        location.reload();
+                                    },
+                                    error: function(xhr, status, error) {
+                                        alert('操作失败，请重试: ' + error);
+                                    }
+                                });
+                            }
+                        });
+                    },
+                    error: function () {
+                        $('#orderDetailModal .modal-body').html('<div class="alert alert-danger">加载订单详情失败</div>');
+                    }
+                });
+            });
+
+            // 打印订单列表报表功能
+            $('#printReport').click(function() {
+                // 创建一个新窗口用于打印
+                var printWindow = window.open('', '_blank', 'height=600,width=800');
+                
+                // 准备要打印的内容
+                var printContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <title>订单列表报表</title>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+                        <style>
+                            body { font-family: 'Microsoft YaHei', sans-serif; }
+                            .print-header { text-align: center; margin-bottom: 20px; }
+                            .print-info { margin-bottom: 15px; }
+                            table { width: 100%; border-collapse: collapse; }
+                            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+                            th { background-color: #f2f2f2; }
+                            .text-danger { color: #dc3545; }
+                            .text-success { color: #28a745; }
+                            .print-footer { margin-top: 30px; text-align: center; font-size: 12px; color: #6c757d; }
+                            .no-print { display: block; }
+                        </style>
+                        <style media="print">
+                            .no-print { display: none; }
+                            body { font-size: 12px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="print-header">
+                                <h3>订单列表报表</h3>
+                                <p>${new Date().toLocaleString('zh-CN')}</p>
+                            </div>
+                            
+                            <div class="print-info">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <strong>待处理订单:</strong> ${$('.order-item[data-status="pending"]:visible').length}单
+                                    </div>
+                                    <div class="col-4">
+                                        <strong>处理中订单:</strong> ${$('.order-item[data-status="preparing"]:visible').length + $('.order-item[data-status="ready"]:visible').length}单
+                                    </div>
+                                    <div class="col-4">
+                                        <strong>已完成订单:</strong> ${$('.order-item[data-status="completed"]:visible').length}单
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>订单编号</th>
+                                        <th>顾客</th>
+                                        <th>金额</th>
+                                        <th>商家收入</th>
+                                        <th>订单时间</th>
+                                        <th>状态</th>
+                                        <th>骑手</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                // 获取当前可见的订单行并添加到打印内容
+                $('.order-item:visible').each(function() {
+                    var orderNumber = $(this).find('td:eq(0)').text();
+                    var customer = $(this).find('td:eq(1)').text();
+                    var amount = $(this).find('td:eq(2)').text();
+                    var revenue = $(this).find('td:eq(3)').text();
+                    var orderTime = $(this).find('td:eq(4)').text();
+                    var status = $(this).find('td:eq(5) .badge').text().trim();
+                    var rider = $(this).find('td:eq(6)').text();
+                    
+                    printContent += `
+                        <tr>
+                            <td>${orderNumber}</td>
+                            <td>${customer}</td>
+                            <td>${amount}</td>
+                            <td>${revenue}</td>
+                            <td>${orderTime}</td>
+                            <td>${status}</td>
+                            <td>${rider}</td>
+                        </tr>
+                    `;
+                });
+                
+                // 完成打印内容
+                printContent += `
+                                </tbody>
+                            </table>
+                            
+                            <div class="print-info">
+                                <p><strong>总计订单数:</strong> ${$('.order-item:visible').length}单</p>
+                                <p><strong>报表生成时间:</strong> ${new Date().toLocaleString('zh-CN')}</p>
+                            </div>
+                            
+                            <div class="print-footer">
+                                <p>此报表由系统自动生成，如有疑问请联系管理员。</p>
+                            </div>
+                            
+                            <div class="no-print text-center mt-3">
+                                <button class="btn btn-primary" onclick="window.print()">打印</button>
+                                <button class="btn btn-secondary" onclick="window.close()">关闭</button>
+                            </div>
+                        </div>
+                        
+                        <script>
+                            // 自动打开打印对话框
+                            setTimeout(function() {
+                                window.print();
+                            }, 500);
+                        </script>
+                    </body>
+                    </html>
+                `;
+                
+                // 写入内容到新窗口并打开打印对话框
+                printWindow.document.open();
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+            });
+
+            // 导出PDF报表，传递筛选条件
+            $('#exportPdf').click(function(e) {
+                // 这里我们使用默认的链接行为，不需要阻止默认事件
+                // 因为我们已经在链接中包含了筛选条件
+                // 所以这里可以为空，或者添加一些额外的功能
+                // 例如显示一个加载提示等
+            });
+        });
+    </script>
+} 

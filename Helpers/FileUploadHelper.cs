@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Web;
+using System.Linq;
 
 namespace food_takeout.Helpers
 {
@@ -17,6 +18,21 @@ namespace food_takeout.Helpers
             if (file == null || file.ContentLength == 0)
             {
                 return null;
+            }
+
+            try
+            {
+                // 验证文件类型
+                var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif" };
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    throw new InvalidOperationException("只支持jpg、png、gif格式的图片");
+                }
+
+                // 验证文件大小（5MB）
+                if (file.ContentLength > 5 * 1024 * 1024)
+                {
+                    throw new InvalidOperationException("图片大小不能超过5MB");
             }
             
             // 确保文件夹存在
@@ -37,6 +53,13 @@ namespace food_takeout.Helpers
             
             // 返回相对路径
             return "/" + savePath.Replace("\\", "/");
+            }
+            catch (Exception ex)
+            {
+                // 记录异常详情
+                System.Diagnostics.Debug.WriteLine($"文件上传失败: {ex.Message}, StackTrace: {ex.StackTrace}");
+                throw new InvalidOperationException("文件上传失败：" + ex.Message);
+            }
         }
     }
 } 

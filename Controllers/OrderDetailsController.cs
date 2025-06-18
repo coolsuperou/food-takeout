@@ -92,7 +92,7 @@ namespace food_takeout.Controllers
                 var dish = db.Dishes.Find(orderDetail.DishId);
                 if (dish != null)
                 {
-                    orderDetail.UnitPrice = dish.Price;
+                    orderDetail.Price = dish.Price;
                 }
                 
                 db.OrderDetails.Add(orderDetail);
@@ -137,7 +137,7 @@ namespace food_takeout.Controllers
         // 处理编辑订单明细请求
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "OrderDetailId,OrderId,DishId,Quantity,UnitPrice")] OrderDetail orderDetail)
+        public ActionResult Edit([Bind(Include = "OrderDetailId,OrderId,DishId,Quantity,Price")] OrderDetail orderDetail)
         {
             if (ModelState.IsValid)
             {

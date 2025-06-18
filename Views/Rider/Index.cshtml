@@ -1,0 +1,617 @@
+@using food_takeout.Models
+@{
+    ViewBag.Title = "骑手中心";
+}
+
+<style>
+    :root {
+        --primary-color: #ff9800;
+        --secondary-color: #03a9f4;
+        --rider-color: #4caf50;
+        --dark-color: #333;
+        --light-color: #f5f5f5;
+    }
+    body {
+        background-color: var(--light-color);
+        color: var(--dark-color);
+    }
+    .rider-header {
+        background-color: var(--rider-color);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    .stats-card {
+        background: white;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        text-align: center;
+        padding: 20px;
+        height: 100%;
+    }
+    .stats-icon {
+        color: var(--rider-color);
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .stats-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+    .stats-label {
+        color: #777;
+        font-size: 0.9rem;
+    }
+    .order-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+    .order-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-color: var(--rider-color);
+    }
+    .order-card.active {
+        border-color: var(--rider-color);
+        box-shadow: 0 0 0 2px var(--rider-color);
+    }
+    .btn-rider {
+        background-color: var(--rider-color);
+        color: white;
+        border: none;
+    }
+    .btn-rider:hover {
+        background-color: #43a047;
+        color: white;
+    }
+    .map-container {
+        height: 400px;
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: #f5f5f5;
+    }
+    .step-indicator {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .step-indicator li {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-left: 2px dashed #ddd;
+        padding-left: 20px;
+        position: relative;
+    }
+    .step-indicator li:last-child {
+        border-left: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    .step-indicator li.completed {
+        border-left-color: var(--rider-color);
+    }
+    .step-indicator li.active {
+        border-left-color: var(--rider-color);
+    }
+    .step-icon {
+        position: absolute;
+        left: -13px;
+        background: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        border: 2px solid #ddd;
+    }
+    .step-indicator li.completed .step-icon {
+        color: white;
+        background-color: var(--rider-color);
+        border-color: var(--rider-color);
+    }
+    .step-indicator li.active .step-icon {
+        color: var(--rider-color);
+        border-color: var(--rider-color);
+    }
+    .step-content {
+        margin-left: 15px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: var(--rider-color);
+        color: white;
+    }
+    .nav-pills .nav-link {
+        color: var(--dark-color);
+    }
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.65rem;
+    }
+    @@media (max-width: 767.98px) {
+        .map-container {
+            height: 250px;
+        }
+    }
+</style>
+
+<!-- 骑手信息头部 -->
+<div class="rider-header">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2><i class="bi bi-bicycle"></i> 骑手中心</h2>
+            <p class="mb-0">您好，@ViewBag.Rider.Name | ID: @ViewBag.Rider.RiderId | 
+                <span class="badge @(ViewBag.Rider.IsOnline ? "bg-success" : "bg-secondary")" id="onlineStatus">
+                    @(ViewBag.Rider.IsOnline ? "在线接单中" : "离线")
+                </span>
+            </p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <button class="btn btn-light" id="onlineStatusToggle">
+                <i class="bi @(ViewBag.Rider.IsOnline ? "bi-toggle-on" : "bi-toggle-off")"></i> 
+                @(ViewBag.Rider.IsOnline ? "在线可接单" : "离线不可接单")
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 骑手数据统计 -->
+<div class="row mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-speedometer"></i>
+            </div>
+            <div class="stats-value">@ViewBag.TodayCompletedOrders</div>
+            <div class="stats-label">今日已完成</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="stats-value">@ViewBag.AverageDeliveryTime 分钟</div>
+            <div class="stats-label">平均配送时间</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="stats-value">@ViewBag.Rating</div>
+            <div class="stats-label">评分</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stats-card">
+            <div class="stats-icon">
+                <i class="bi bi-cash"></i>
+            </div>
+            <div class="stats-value">¥@ViewBag.TodayEarning.ToString("F2")</div>
+            <div class="stats-label">今日收入</div>
+        </div>
+    </div>
+</div>
+
+<!-- 导航标签页 -->
+<ul class="nav nav-pills mb-4" id="orderTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab">
+            可接订单 
+            @if (ViewBag.AvailableOrders != null && ViewBag.AvailableOrders.Count > 0)
+            {
+                <span class="badge bg-danger rounded-pill">@ViewBag.AvailableOrders.Count</span>
+            }
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pending-delivery-tab" data-bs-toggle="tab" data-bs-target="#pending-delivery" type="button" role="tab">
+            待配送订单
+            @if (ViewBag.PendingDeliveryOrders != null && ViewBag.PendingDeliveryOrders.Count > 0)
+            {
+                <span class="badge bg-primary rounded-pill">@ViewBag.PendingDeliveryOrders.Count</span>
+            }
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">历史订单</button>
+    </li>
+</ul>
+
+<!-- 标签页内容 -->
+<div class="tab-content" id="orderTabContent">
+    <!-- 可接订单标签页 -->
+    <div class="tab-pane fade show active" id="available" role="tabpanel" aria-labelledby="available-tab">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <p class="mb-0">
+                        <span class="badge @(ViewBag.Rider.IsOnline ? "bg-success" : "bg-secondary")">
+                            <i class="bi @(ViewBag.Rider.IsOnline ? "bi-broadcast" : "bi-broadcast-pin")"></i>
+                            在线状态: @(ViewBag.Rider.IsOnline ? "在线" : "离线")
+                        </span>
+                        <span class="badge @(ViewBag.Rider.IsAvailable ? "bg-success" : "bg-warning")">
+                            <i class="bi @(ViewBag.Rider.IsAvailable ? "bi-check-circle" : "bi-x-circle")"></i>
+                            接单状态: @(ViewBag.Rider.IsAvailable ? "可接单" : "不可接单")
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-person-badge"></i> 骑手ID: @ViewBag.Rider.RiderId
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            @if (ViewBag.AvailableOrders != null && ViewBag.AvailableOrders.Count > 0)
+            {
+                <div class="col-12 mb-3">
+                    <h5>当前有 @ViewBag.AvailableOrders.Count 个可接订单</h5>
+                </div>
+                
+                foreach (var order in ViewBag.AvailableOrders)
+                {
+                    <div class="col-md-4 mb-3">
+                        <div class="card order-card @(order.IsSelected ? "active" : "")">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="card-title mb-0">#@order.OrderNumber</h6>
+                                    <span class="badge bg-success status-badge">待配送</span>
+                                </div>
+                                <p class="mb-2"><i class="bi bi-shop"></i> <strong>@order.RestaurantName</strong> → @order.DeliveryAddress</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><i class="bi bi-geo"></i> @order.Distance km</span>
+                                    <span><i class="bi bi-cash"></i> ¥@order.DeliveryFee</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">@order.OrderTime 下单</small>
+                                    <form action="@Url.Action("TakeOrder", "Orders", new { id = order.OrderId })" method="post" style="display: inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-rider btn-sm">接单</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="alert alert-info text-center py-4">
+                        <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0">当前没有可接的订单</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- 待配送订单标签页 -->
+    <div class="tab-pane fade" id="pending-delivery" role="tabpanel" aria-labelledby="pending-delivery-tab">
+        @if (ViewBag.PendingDeliveryOrders != null && ViewBag.PendingDeliveryOrders.Count > 0)
+        {
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <h5>您有 @ViewBag.PendingDeliveryOrders.Count 个待配送的订单</h5>
+                </div>
+                
+                @foreach (var order in ViewBag.PendingDeliveryOrders)
+                {
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">订单 #@order.OrderNumber</h5>
+                                    <span class="badge bg-primary">配送中</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-7 mb-3">
+                                        <div class="map-container" id="deliveryMap-@order.OrderId">
+                                            @if (!string.IsNullOrEmpty(order.MapUrl))
+                                            {
+                                                <img src="@order.MapUrl" class="img-fluid w-100 h-100" alt="配送路线" style="object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="d-flex justify-content-center align-items-center h-100 bg-light">
+                                                    <div class="text-center">
+                                                        <i class="bi bi-map fs-1 text-secondary"></i>
+                                                        <p>地图加载中...</p>
+                                                    </div>
+                                                </div>
+                                            }
+                                            <div class="position-absolute bottom-0 start-0 end-0 p-3 bg-white bg-opacity-75">
+                                                <div class="d-flex justify-content-between">
+                                                    <div>
+                                                        <i class="bi bi-geo-alt"></i> 配送距离: @order.Distance 公里
+                                                    </div>
+                                                    <div>
+                                                        <i class="bi bi-clock"></i> 预计到达: @order.EstimatedArrival
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="bi bi-shop fs-4 me-2"></i>
+                                                    <div>
+                                                        <h6 class="mb-0">@order.RestaurantName</h6>
+                                                        <p class="text-muted mb-0">@order.RestaurantAddress</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-person fs-4 me-2"></i>
+                                                    <div>
+                                                        <h6 class="mb-0">@order.CustomerName</h6>
+                                                        <p class="text-muted mb-0">@order.DeliveryAddress (@order.Distance 公里)</p>
+                                                        <p class="text-muted mb-0">电话: @order.CustomerPhone</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <form action="@Url.Action("CompleteDelivery", "Orders", new { id = order.OrderId })" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-success w-100">确认送达</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <h6>订单信息</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <tbody>
+                                                    @foreach (var item in order.Items)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Name</td>
+                                                            <td>x @item.Quantity</td>
+                                                            <td class="text-end">¥@item.Price</td>
+                                                        </tr>
+                                                    }
+                                                    <tr>
+                                                        <td colspan="2" class="text-end fw-bold">合计</td>
+                                                        <td class="text-end fw-bold">¥@order.TotalAmount</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(order.Remarks))
+                                        {
+                                            <div class="alert alert-warning mt-2">
+                                                <i class="bi bi-exclamation-triangle-fill"></i> 顾客备注：@order.Remarks
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info text-center py-4">
+                <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                <p class="mb-0">您当前没有待配送的订单</p>
+            </div>
+        }
+    </div>
+
+    <!-- 历史订单标签页 -->
+    <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">配送记录</h5>
+                    <div>
+                        <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "day" })" class="btn @(ViewBag.Period == "day" ? "btn-rider" : "btn-outline-secondary") btn-sm">日</a>
+                        <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "week" })" class="btn @(ViewBag.Period == "week" ? "btn-rider" : "btn-outline-secondary") btn-sm">周</a>
+                        <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "month" })" class="btn @(ViewBag.Period == "month" ? "btn-rider" : "btn-outline-secondary") btn-sm">月</a>
+                        <a href="@Url.Action("DeliveryHistory", "Orders", new { period = "all" })" class="btn @(ViewBag.Period == "all" ? "btn-rider" : "btn-outline-secondary") btn-sm">全部</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.HistoryOrders != null && ViewBag.HistoryOrders.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>订单号</th>
+                                    <th>商家</th>
+                                    <th>配送地址</th>
+                                    <th>距离</th>
+                                    <th>完成时间</th>
+                                    <th>配送费</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in ViewBag.HistoryOrders)
+                                {
+                                    <tr>
+                                        <td>@order.OrderNumber</td>
+                                        <td>@order.RestaurantName</td>
+                                        <td>@order.DeliveryAddress</td>
+                                        <td>@order.Distance km</td>
+                                        <td>@order.CompletedTime</td>
+                                        <td class="text-success">¥@order.DeliveryFee.ToString("F2")</td>
+                                        <td>
+                                            <a href="@Url.Action("Details", "Orders", new { id = order.OrderId })" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="@Url.Action("DeliveryHistory", "Orders")" class="btn btn-outline-primary">
+                            查看完整配送历史 <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info text-center py-4">
+                        <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+                        <p class="mb-0">暂无历史订单数据</p>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="@Url.Action("DeliveryHistory", "Orders")" class="btn btn-outline-primary">
+                            查看完整配送历史 <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- 收入统计图表 -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">收入统计</h5>
+            </div>
+            <div class="card-body">
+                <div id="incomeChart" class="income-chart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化收入图表
+            var incomeChart = echarts.init(document.getElementById('incomeChart'));
+            
+            @if (ViewBag.IncomeData != null)
+            {
+                @:var incomeOption = {
+                @:    tooltip: {
+                @:        trigger: 'axis',
+                @:        axisPointer: {
+                @:            type: 'shadow'
+                @:        }
+                @:    },
+                @:    grid: {
+                @:        left: '3%',
+                @:        right: '4%',
+                @:        bottom: '3%',
+                @:        containLabel: true
+                @:    },
+                @:    xAxis: {
+                @:        type: 'category',
+                @:        data: @Html.Raw(Json.Encode(ViewBag.IncomeData.Labels))
+                @:    },
+                @:    yAxis: {
+                @:        type: 'value'
+                @:    },
+                @:    series: [
+                @:        {
+                @:            name: '配送收入',
+                @:            type: 'bar',
+                @:            data: @Html.Raw(Json.Encode(ViewBag.IncomeData.Values)),
+                @:            itemStyle: {
+                @:                color: '#ffd166'
+                @:            }
+                @:        }
+                @:    ]
+                @:};
+                @:incomeChart.setOption(incomeOption);
+            }
+
+            // 窗口大小变化时重新绘制图表
+            window.addEventListener('resize', function() {
+                incomeChart.resize();
+            });
+
+            // 当标签页切换时重新绘制图表
+            var historyTab = document.getElementById('history-tab');
+            historyTab.addEventListener('shown.bs.tab', function (event) {
+                incomeChart.resize();
+            });
+            
+            // 在线状态开关
+            var onlineStatusBtn = document.getElementById('onlineStatusToggle');
+            var onlineStatusLabel = document.getElementById('onlineStatus');
+            
+            if (onlineStatusBtn) {
+                onlineStatusBtn.addEventListener('click', function() {
+                    // 禁用按钮，防止重复点击
+                    onlineStatusBtn.disabled = true;
+                    
+                    // 获取CSRF令牌
+                    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+                    var tokenValue = token ? token.value : '';
+                    
+                    fetch('@Url.Action("ToggleOnlineStatus", "Rider")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': tokenValue
+                        },
+                        credentials: 'same-origin' // 包含cookies
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 重新启用按钮
+                        onlineStatusBtn.disabled = false;
+                        
+                        if (data.success) {
+                            // 更新按钮文本和图标
+                            if (data.isOnline) {
+                                onlineStatusBtn.innerHTML = '<i class="bi bi-toggle-on"></i> 在线可接单';
+                                onlineStatusLabel.className = 'badge bg-success';
+                                onlineStatusLabel.textContent = '在线接单中';
+                            } else {
+                                onlineStatusBtn.innerHTML = '<i class="bi bi-toggle-off"></i> 离线不可接单';
+                                onlineStatusLabel.className = 'badge bg-secondary';
+                                onlineStatusLabel.textContent = '离线';
+                            }
+                            
+                            // 显示成功消息
+                            alert(data.message || '状态已更新');
+                            
+                            // 刷新页面以获取最新订单
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            alert(data.message || '操作失败');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        onlineStatusBtn.disabled = false;
+                        alert('操作失败，请稍后再试');
+                    });
+                });
+            }
+        });
+    </script>
+    
+    @* 添加CSRF令牌 *@
+    @Html.AntiForgeryToken()
+}

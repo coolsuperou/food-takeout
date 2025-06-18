@@ -26,5 +26,10 @@ namespace food_takeout.Controllers
 
             return View();
         }
+
+        public ActionResult Error()
+        {
+            return View();
+        }
     }
 }

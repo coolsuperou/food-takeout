@@ -19,8 +19,62 @@ namespace food_takeout.Models
         /// <summary>
         /// 订单ID
         /// </summary>
+        [Required]
         [Display(Name = "订单")]
         public int OrderId { get; set; }
+        
+        /// <summary>
+        /// 顾客ID
+        /// </summary>
+        [Required]
+        [Display(Name = "顾客")]
+        public int CustomerId { get; set; }
+        
+        /// <summary>
+        /// 餐厅ID
+        /// </summary>
+        [Required]
+        [Display(Name = "餐厅")]
+        public int RestaurantId { get; set; }
+        
+        /// <summary>
+        /// 评分
+        /// </summary>
+        [Required]
+        [Range(1, 5, ErrorMessage = "评分必须在1-5之间")]
+        [Display(Name = "评分")]
+        public int Rating { get; set; }
+        
+        /// <summary>
+        /// 评价内容
+        /// </summary>
+        [StringLength(500)]
+        [Display(Name = "评价内容")]
+        public string Comment { get; set; }
+        
+        /// <summary>
+        /// 评价内容（与Comment相同，为保持兼容性）
+        /// </summary>
+        [StringLength(500)]
+        [Display(Name = "评价内容")]
+        public string Content 
+        { 
+            get { return Comment; } 
+            set { Comment = value; } 
+        }
+        
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        [Required]
+        [Display(Name = "创建时间")]
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        
+        /// <summary>
+        /// 更新时间
+        /// </summary>
+        [Display(Name = "更新时间")]
+        public DateTime? UpdatedAt { get; set; }
         
         /// <summary>
         /// 订单信息
@@ -29,22 +83,10 @@ namespace food_takeout.Models
         public virtual Order Order { get; set; }
         
         /// <summary>
-        /// 顾客ID
-        /// </summary>
-        [Display(Name = "顾客")]
-        public int CustomerId { get; set; }
-        
-        /// <summary>
         /// 顾客信息
         /// </summary>
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; }
-        
-        /// <summary>
-        /// 餐厅ID
-        /// </summary>
-        [Display(Name = "餐厅")]
-        public int RestaurantId { get; set; }
         
         /// <summary>
         /// 餐厅信息
@@ -53,24 +95,15 @@ namespace food_takeout.Models
         public virtual Restaurant Restaurant { get; set; }
         
         /// <summary>
-        /// 评分
+        /// Count属性，用于防止ViewBag.Count错误
         /// </summary>
-        [Required]
-        [Display(Name = "评分")]
-        [Range(1, 5)]
-        public int Rating { get; set; }
-        
-        /// <summary>
-        /// 评价内容
-        /// </summary>
-        [MaxLength(500)]
-        [Display(Name = "评价内容")]
-        public string Comment { get; set; }
-        
-        /// <summary>
-        /// 创建时间
-        /// </summary>
-        [Display(Name = "评价时间")]
-        public DateTime CreatedAt { get; set; }
+        [NotMapped]
+        public int Count
+        {
+            get
+            {
+                return 1; // 防止ViewBag.Count错误
+            }
+        }
     }
 } 

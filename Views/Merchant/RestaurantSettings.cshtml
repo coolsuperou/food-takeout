@@ -1,0 +1,419 @@
+@model food_takeout.Models.Restaurant
+
+@{
+    ViewBag.Title = "店铺设置";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <h2 class="text-center mb-4">店铺设置</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> 保存失败</h5>
+            <p>@TempData["ErrorMessage"]</p>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> 表单验证错误</h5>
+            <ul>
+                @foreach (var state in ViewData.ModelState)
+                {
+                    foreach (var error in state.Value.Errors)
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                }
+            </ul>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <div id="js-error-container" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none;">
+        <h5><i class="bi bi-exclamation-triangle-fill"></i> 错误信息</h5>
+        <p id="js-error-message"></p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-body">
+                    @using (Html.BeginForm("RestaurantSettings", "Merchant", FormMethod.Post, new { enctype = "multipart/form-data", id = "restaurantSettingsForm" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.RestaurantId)
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Name, "餐厅名称", new { @class = "control-label" })
+                            <span class="text-danger">*</span>
+                            @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.PhoneNumber, "联系电话", new { @class = "control-label" })
+                            @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Address, "详细地址", new { @class = "control-label" })
+                            <span class="text-danger">*</span>
+                            @Html.TextBoxFor(m => m.Address, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Location, "所在区域", new { @class = "control-label" })
+                            @Html.TextBoxFor(m => m.Location, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Location, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">可选，例如：朝阳区、海淀区等</small>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Description, "餐厅简介", new { @class = "control-label" })
+                            @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3" })
+                            @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+                            <small class="form-text text-muted">可选，简单介绍您的餐厅特色</small>
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.BusinessHours, "营业时间", new { @class = "control-label" })
+                            <select class="form-control" id="BusinessHours" name="BusinessHours">
+                                <option value="">请选择营业时间</option>
+                                <option value="08:00-20:00" @if(Model.BusinessHours == "08:00-20:00") { <text>selected</text> }>08:00-20:00</option>
+                                <option value="09:00-21:00" @if(Model.BusinessHours == "09:00-21:00") { <text>selected</text> }>09:00-21:00</option>
+                                <option value="10:00-22:00" @if(Model.BusinessHours == "10:00-22:00") { <text>selected</text> }>10:00-22:00</option>
+                                <option value="11:00-23:00" @if(Model.BusinessHours == "11:00-23:00") { <text>selected</text> }>11:00-23:00</option>
+                                <option value="全天24小时" @if(Model.BusinessHours == "全天24小时") { <text>selected</text> }>全天24小时</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <input type="text" id="customBusinessHours" class="form-control mt-2" placeholder="自定义营业时间，例如：09:00-22:00" style="display:none;">
+                            @Html.ValidationMessageFor(m => m.BusinessHours, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Category, "主营分类", new { @class = "control-label" })
+                            <select class="form-control" id="Category" name="Category">
+                                <option value="">请选择主营分类</option>
+                                <option value="中餐" @if(Model.Category == "中餐") { <text>selected</text> }>中餐</option>
+                                <option value="西餐" @if(Model.Category == "西餐") { <text>selected</text> }>西餐</option>
+                                <option value="快餐" @if(Model.Category == "快餐") { <text>selected</text> }>快餐</option>
+                                <option value="甜点" @if(Model.Category == "甜点") { <text>selected</text> }>甜点</option>
+                                <option value="火锅" @if(Model.Category == "火锅") { <text>selected</text> }>火锅</option>
+                                <option value="烧烤" @if(Model.Category == "烧烤") { <text>selected</text> }>烧烤</option>
+                                <option value="日料" @if(Model.Category == "日料") { <text>selected</text> }>日料</option>
+                                <option value="韩餐" @if(Model.Category == "韩餐") { <text>selected</text> }>韩餐</option>
+                                <option value="custom">其他...</option>
+                            </select>
+                            <input type="text" id="customCategory" class="form-control mt-2" placeholder="请输入分类名称" style="display:none;">
+                            @Html.ValidationMessageFor(m => m.Category, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Categories, "分类标签", new { @class = "control-label" })
+                            <div class="input-group">
+                                @Html.TextBoxFor(m => m.Categories, new { @class = "form-control", placeholder = "多个分类用逗号分隔，例如：快餐,午餐,盖饭" })
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
+                                        常用标签
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item tag-item" href="#">快餐</a>
+                                        <a class="dropdown-item tag-item" href="#">午餐</a>
+                                        <a class="dropdown-item tag-item" href="#">晚餐</a>
+                                        <a class="dropdown-item tag-item" href="#">夜宵</a>
+                                        <a class="dropdown-item tag-item" href="#">家常菜</a>
+                                        <a class="dropdown-item tag-item" href="#">小吃</a>
+                                        <a class="dropdown-item tag-item" href="#">饮品</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">可选，多个标签用逗号分隔</small>
+                            @Html.ValidationMessageFor(m => m.Categories, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.DeliveryTime, "预计配送时间(分钟)", new { @class = "control-label" })
+                            @Html.TextBoxFor(m => m.DeliveryTime, new { @class = "form-control", type = "number", min = "10", max = "120", step = "5" })
+                            @Html.ValidationMessageFor(m => m.DeliveryTime, "", new { @class = "text-danger" })
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">餐厅Logo</label>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    @if (!string.IsNullOrEmpty(Model.ImageUrl) || !string.IsNullOrEmpty(Model.LogoUrl))
+                                    {
+                                        <div class="mb-3">
+                                            <img src="@Url.Content(!string.IsNullOrEmpty(Model.LogoUrl) ? Model.LogoUrl : Model.ImageUrl)" 
+                                                 alt="当前Logo" class="img-thumbnail" style="max-height: 150px;"
+                                                 onerror="this.onerror=null; this.src='@Url.Action("DefaultLogo", "Merchant")';">
+                                        </div>
+                                    }
+                                    <div class="input-group">
+                                        <div class="custom-file">
+                                            <input type="file" class="custom-file-input" id="logoFile" name="logoFile" accept="image/jpeg,image/png,image/gif">
+                                            <label class="custom-file-label" for="logoFile">选择Logo图片</label>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted mt-1">支持jpg、png、gif格式，建议尺寸为正方形，大小不超过5MB</small>
+                                    <small class="form-text text-info mt-1"><i class="bi bi-info-circle"></i> Logo会自动同步到仪表盘显示</small>
+                                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                    {
+                                        <div class="mt-2">
+                                            <small class="text-muted">当前Logo路径: @Model.ImageUrl</small>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                                    {
+                                        <div class="mt-1">
+                                            <small class="text-muted">当前LogoUrl: @Model.LogoUrl</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                @Html.CheckBoxFor(m => m.IsActive, new { @class = "custom-control-input" })
+                                <label class="custom-control-label" for="IsActive">营业状态</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                @Html.CheckBoxFor(m => m.IsHot, new { @class = "custom-control-input" })
+                                <label class="custom-control-label" for="IsHot">热门餐厅</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                            <a href="@Url.Action("MyRestaurants")" class="btn btn-secondary">返回列表</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(document).ready(function () {
+            // 表单提交处理
+            $('#restaurantSettingsForm').submit(function (e) {
+                // 清除之前的错误信息
+                $('.field-validation-error').empty();
+                $('#js-error-container').hide();
+                
+                // 客户端验证
+                if (!$(this).valid()) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // 显示加载指示器
+                $('#saveButton').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...');
+                
+                // 允许表单正常提交
+                return true;
+            });
+            
+            // AJAX错误处理
+            $(document).ajaxError(function (event, jqXHR, ajaxSettings, thrownError) {
+                // 显示错误信息
+                $('#js-error-message').text('请求失败: ' + (jqXHR.responseText || thrownError || '未知错误'));
+                $('#js-error-container').show();
+                
+                // 重置按钮状态
+                $('#saveButton').prop('disabled', false).html('保存');
+                
+                // 记录错误到控制台
+                console.error('AJAX错误:', jqXHR.status, jqXHR.statusText, jqXHR.responseText);
+            });
+            
+            // 添加详细的表单验证错误显示
+            $.validator.setDefaults({
+                highlight: function (element) {
+                    $(element).addClass('is-invalid').removeClass('is-valid');
+                },
+                unhighlight: function (element) {
+                    $(element).removeClass('is-invalid').addClass('is-valid');
+                },
+                errorElement: 'div',
+                errorClass: 'invalid-feedback',
+                errorPlacement: function (error, element) {
+                    if (element.parent('.input-group').length) {
+                        error.insertAfter(element.parent());
+                    } else {
+                        error.insertAfter(element);
+                    }
+                }
+            });
+            
+            // 添加自定义验证方法
+            $.validator.addMethod('decimal', function (value, element) {
+                return this.optional(element) || /^-?\d+(\.\d{1,2})?$/.test(value);
+            }, '请输入有效的金额（最多两位小数）');
+
+            // 表单提交前验证
+            $("#restaurantSettingsForm").on("submit", function(e) {
+                console.log("表单提交验证开始");
+                
+                // 如果选择的是自定义营业时间，确保值已设置
+                if ($("#BusinessHours").val() === "custom") {
+                    var customValue = $("#customBusinessHours").val();
+                    if (!customValue) {
+                        alert("请输入自定义营业时间");
+                        e.preventDefault();
+                        return false;
+                    }
+                    $("#BusinessHours").val(customValue);
+                    console.log("设置自定义营业时间: " + customValue);
+                }
+                
+                // 如果选择的是自定义分类，确保值已设置
+                if ($("#Category").val() === "custom") {
+                    var customValue = $("#customCategory").val();
+                    if (!customValue) {
+                        alert("请输入自定义分类");
+                        e.preventDefault();
+                        return false;
+                    }
+                    $("#Category").val(customValue);
+                    console.log("设置自定义分类: " + customValue);
+                }
+                
+                // 检查必填字段
+                var name = $("#Name").val();
+                if (!name || name.trim() === "") {
+                    alert("请输入餐厅名称");
+                    $("#Name").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                var address = $("#Address").val();
+                if (!address || address.trim() === "") {
+                    alert("请输入详细地址");
+                    $("#Address").focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                console.log("表单验证通过，准备提交");
+                return true;
+            });
+
+            // 显示选择的文件名
+            $(".custom-file-input").on("change", function () {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+            });
+
+            // 验证Logo文件大小和类型
+            $("#logoFile").on("change", function () {
+                var file = this.files[0];
+                if (file) {
+                    // 检查文件类型
+                    var validTypes = ["image/jpeg", "image/png", "image/gif"];
+                    if (validTypes.indexOf(file.type) === -1) {
+                        alert("请选择jpg、png或gif格式的图片");
+                        this.value = "";
+                        return;
+                    }
+
+                    // 检查文件大小（最大5MB）
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert("图片大小不能超过5MB");
+                        this.value = "";
+                        return;
+                    }
+                }
+            });
+
+            // 处理营业时间自定义选项
+            $("#BusinessHours").change(function () {
+                if ($(this).val() === "custom") {
+                    $("#customBusinessHours").show().focus();
+                } else {
+                    $("#customBusinessHours").hide();
+                }
+            });
+
+            // 如果选择的是自定义，则在提交前将值赋给BusinessHours
+            $("#customBusinessHours").on("input", function () {
+                if ($("#BusinessHours").val() === "custom") {
+                    $("#BusinessHours").val($(this).val());
+                }
+            });
+
+            // 处理分类自定义选项
+            $("#Category").change(function () {
+                if ($(this).val() === "custom") {
+                    $("#customCategory").show().focus();
+                } else {
+                    $("#customCategory").hide();
+                }
+            });
+
+            // 如果选择的是自定义，则在提交前将值赋给Category
+            $("#customCategory").on("input", function () {
+                if ($("#Category").val() === "custom") {
+                    $("#Category").val($(this).val());
+                }
+            });
+
+            // 初始化自定义字段的显示状态
+            if ($("#BusinessHours").val() === "custom") {
+                $("#customBusinessHours").show();
+            }
+            if ($("#Category").val() === "custom") {
+                $("#customCategory").show();
+            }
+
+            // 添加标签到输入框
+            $(".tag-item").click(function (e) {
+                e.preventDefault();
+                var tag = $(this).text();
+                var currentTags = $("#Categories").val();
+                
+                if (currentTags) {
+                    // 检查是否已存在该标签
+                    var tags = currentTags.split(',');
+                    if (tags.indexOf(tag) === -1) {
+                        $("#Categories").val(currentTags + ',' + tag);
+                    }
+                } else {
+                    $("#Categories").val(tag);
+                }
+            });
+        });
+    </script>
+} 

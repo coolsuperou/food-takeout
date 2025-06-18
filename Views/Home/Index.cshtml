@@ -1,50 +1,179 @@
 ﻿@{
-    ViewBag.Title = "餐饮外卖系统";
+    ViewBag.Title = "美味快送";
 }
 
-<div class="jumbotron">
-    <h1>欢迎使用餐饮外卖系统</h1>
-    <p class="lead">浏览餐厅、选择美食、在线下单，享受便捷的外卖体验！</p>
-    <p>
-        @if (Session["CustomerId"] != null)
-        {
-            @Html.ActionLink("立即点餐", "SelectRestaurant", "Orders", null, new { @class = "btn btn-primary btn-lg" })
-            @Html.ActionLink("我的订单", "MyOrders", "Orders", null, new { @class = "btn btn-outline-primary btn-lg ms-2" })
-        }
-        else
-        {
-            @Html.ActionLink("登录", "Login", "Account", null, new { @class = "btn btn-primary btn-lg" })
-            @Html.ActionLink("注册", "Register", "Account", null, new { @class = "btn btn-outline-primary btn-lg ms-2" })
-        }
-    </p>
+<!-- 英雄区 -->
+<div class="hero text-center" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'); background-size: cover; background-position: center; color: white; padding: 100px 0; margin-bottom: 40px; border-radius: 10px;">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">美味快送 - 餐饮外卖系统</h1>
+        <p class="lead mb-4">浏览餐厅、选择美食、在线下单，享受便捷的外卖体验！</p>
+        <div>
+            @if (Session["CustomerId"] != null)
+            {
+                @Html.ActionLink("立即点餐", "SelectRestaurant", "Orders", null, new { @class = "btn btn-primary btn-lg me-2" })
+                @Html.ActionLink("我的订单", "MyOrders", "Orders", null, new { @class = "btn btn-outline-light btn-lg" })
+            }
+            else
+            {
+                @Html.ActionLink("登录", "Login", "Account", null, new { @class = "btn btn-primary btn-lg me-2" })
+                @Html.ActionLink("注册", "Register", "Account", null, new { @class = "btn btn-outline-light btn-lg" })
+            }
+        </div>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="card-title">浏览餐厅</h2>
-                <p class="card-text">探索各类餐厅，寻找您喜爱的美食。</p>
-                <p>@Html.ActionLink("查看餐厅", "Index", "Restaurants", null, new { @class = "btn btn-outline-secondary" })</p>
+<!-- 基础功能 -->
+<div id="features" class="container mb-5">
+    <h2 class="text-center mb-5">基础功能</h2>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="feature-card card h-100 p-4 text-center">
+                <div class="card-body">
+                    <div style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="bi bi-database-add"></i>
+                    </div>
+                    <h4>增删改查</h4>
+                    <p class="text-muted">菜品、订单、用户的完整管理功能</p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="card-title">在线点餐</h2>
-                <p class="card-text">方便快捷的在线点餐体验，轻松下单。</p>
-                <p>@Html.ActionLink("开始点餐", "SelectRestaurant", "Orders", null, new { @class = "btn btn-outline-secondary" })</p>
+        <div class="col-md-3">
+            <div class="feature-card card h-100 p-4 text-center">
+                <div class="card-body">
+                    <div style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <h4>关联表</h4>
+                    <p class="text-muted">顾客-餐厅-订单多表关联，数据完整性保障</p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="card-title">订单管理</h2>
-                <p class="card-text">查看订单状态，随时了解配送进度。</p>
-                <p>@Html.ActionLink("我的订单", "MyOrders", "Orders", null, new { @class = "btn btn-outline-secondary" })</p>
+        <div class="col-md-3">
+            <div class="feature-card card h-100 p-4 text-center">
+                <div class="card-body">
+                    <div style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="bi bi-person-lock"></i>
+                    </div>
+                    <h4>注册登录</h4>
+                    <p class="text-muted">安全的用户认证系统，保障账户安全</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="feature-card card h-100 p-4 text-center">
+                <div class="card-body">
+                    <div style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+                    <h4>PDF打印</h4>
+                    <p class="text-muted">订单小票PDF导出，便于商家和顾客查看</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- 用户角色 -->
+<div id="roles" style="padding: 60px 0; background-color: var(--light-color);">
+    <div class="container">
+        <h2 class="text-center mb-5">用户角色</h2>
+        <div class="row g-4">
+            <!-- 顾客角色 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div style="padding: 20px; color: white; font-weight: bold; background-color: var(--primary-color);">
+                        <h3><i class="bi bi-person"></i> 顾客</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-person-check"></i> 注册/登录</h5>
+                            <p class="text-muted">便捷的账户管理，快速登录系统</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-cart"></i> 点餐功能</h5>
+                            <p class="text-muted">浏览餐厅菜单，加入购物车，提交订单</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-list-check"></i> 订单管理</h5>
+                            <p class="text-muted">查看订单状态，取消未接单的订单</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-star"></i> 评价功能</h5>
+                            <p class="text-muted">对已完成的订单进行评分和评论</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商家角色 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div style="padding: 20px; color: white; font-weight: bold; background-color: var(--secondary-color);">
+                        <h3><i class="bi bi-shop"></i> 商家</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-person-check"></i> 注册/登录</h5>
+                            <p class="text-muted">商家专属账户体系，安全管理店铺</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-menu-button-wide"></i> 菜单管理</h5>
+                            <p class="text-muted">添加/修改菜品（名称、价格、图片）</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-bag-check"></i> 订单处理</h5>
+                            <p class="text-muted">接单/拒单，标记订单状态（已出餐）</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-graph-up"></i> 数据统计</h5>
+                            <p class="text-muted">查看销售数据（ECharts可视化展示）</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 骑手角色 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div style="padding: 20px; color: var(--dark-color); font-weight: bold; background-color: #ffd166;">
+                        <h3><i class="bi bi-bicycle"></i> 骑手</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-person-check"></i> 注册/登录</h5>
+                            <p class="text-muted">骑手专属账户，身份验证保障</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-clipboard-check"></i> 接单配送</h5>
+                            <p class="text-muted">查看待配送订单，确认取货、送达</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-geo"></i> 位置共享</h5>
+                            <p class="text-muted">实时位置共享，顾客可追踪配送进度</p>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <h5><i class="bi bi-clock-history"></i> 配送记录</h5>
+                            <p class="text-muted">查看历史配送记录和评价</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 初始化 Bootstrap 5 下拉菜單
+            if (typeof bootstrap !== 'undefined' && typeof bootstrap.Dropdown !== 'undefined') {
+                var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                    return new bootstrap.Dropdown(dropdownToggleEl);
+                });
+            }
+        });
+    </script>
+}

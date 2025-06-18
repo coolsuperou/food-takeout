@@ -2,9 +2,22 @@
 
 @{
     ViewBag.Title = "编辑餐厅";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>编辑餐厅</h2>
+<script>
+    // 重定向到Merchant控制器的RestaurantSettings
+    window.location.href = '@Url.Action("RestaurantSettings", "Merchant", new { id = Model.RestaurantId })';
+</script>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h3>正在跳转到店铺设置页面...</h3>
+            <p>如果没有自动跳转，请<a href="@Url.Action("RestaurantSettings", "Merchant", new { id = Model.RestaurantId })">点击这里</a></p>
+        </div>
+    </div>
+</div>
 
 @using (Html.BeginForm("Edit", "Restaurants", FormMethod.Post, new { enctype = "multipart/form-data" }))
 {
@@ -24,10 +37,10 @@
         </div>
 
         <div class="form-group">
-            @Html.LabelFor(model => model.Location, "餐厅位置", htmlAttributes: new { @class = "control-label col-md-2" })
+            @Html.LabelFor(model => model.Address, "餐厅地址", htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
-                @Html.EditorFor(model => model.Location, new { htmlAttributes = new { @class = "form-control" } })
-                @Html.ValidationMessageFor(model => model.Location, "", new { @class = "text-danger" })
+                @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
             </div>
         </div>
         

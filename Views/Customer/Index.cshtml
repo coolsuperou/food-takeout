@@ -1,0 +1,509 @@
+@using food_takeout.Models
+@{
+    ViewBag.Title = "顾客中心";
+    var restaurants = ViewBag.AllRestaurants as List<Restaurant> ?? new List<Restaurant>();
+    var recommendedDishes = ViewBag.RecommendedDishes as List<Dish> ?? new List<Dish>();
+    var topSellingDishes = ViewBag.TopSellingDishes as List<Dish> ?? new List<Dish>();
+    var latestOrders = ViewBag.LatestOrders as List<Order> ?? new List<Order>();
+    var customer = ViewBag.Customer as Customer;
+}
+
+<style>
+    .user-welcome {
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .section-header {
+        margin-bottom: 25px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    .section-header:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50px;
+        height: 3px;
+        background-color: #ff6b6b;
+    }
+    .restaurant-card {
+        position: relative;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .restaurant-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .restaurant-card img {
+        height: 150px;
+        object-fit: cover;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .restaurant-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    .restaurant-status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .order-status {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+    .status-preparing {
+        background-color: #ffc107;
+    }
+    .status-delivering {
+        background-color: #0d6efd;
+    }
+    .status-delivered {
+        background-color: #198754;
+    }
+    .rating {
+        color: #ffc107;
+    }
+    .cart-badge {
+        position: relative;
+    }
+    .cart-badge .badge {
+        position: absolute;
+        top: -8px;
+        right: -10px;
+    }
+    .dish-card {
+        transition: all 0.3s ease;
+    }
+    .dish-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .dish-card img {
+        height: 120px;
+        object-fit: cover;
+    }
+    .top-selling-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background-color: #ff6b6b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+</style>
+
+<!-- 调试信息区 -->
+@if (ViewData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        <h4>发生错误</h4>
+        <p>@ViewData["ErrorMessage"]</p>
+        @if (ViewData["ErrorStack"] != null)
+        {
+            <pre style="font-size: 0.8rem; max-height: 200px; overflow: auto;">@ViewData["ErrorStack"]</pre>
+        }
+    </div>
+}
+
+
+
+<!-- 欢迎区 -->
+<div class="user-welcome">
+    <div class="row align-items-center">
+        <div class="col-md-6">
+            <h2><i class="bi bi-hand-thumbs-up"></i> 您好，@(customer?.Name ?? "顾客")！</h2>
+            <p class="mb-0">欢迎回来，今天想吃点什么？</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <button class="btn btn-light" id="selectAddressBtn">
+                <i class="bi bi-geo-alt"></i> @(customer?.Address ?? "选择地址")
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 快捷功能区 -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card text-center p-3">
+            <div class="card-body">
+                <a href="@Url.Action("Index", "Restaurants")" class="text-decoration-none">
+                    <i class="bi bi-shop fs-1 text-primary"></i>
+                    <h5 class="mt-2">餐厅</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-center p-3">
+            <div class="card-body">
+                <a href="@Url.Action("MyOrders", "Orders")" class="text-decoration-none">
+                    <i class="bi bi-clock-history fs-1 text-primary"></i>
+                    <h5 class="mt-2">历史订单</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-center p-3">
+            <div class="card-body">
+                <a href="#" class="text-decoration-none">
+                    <i class="bi bi-star fs-1 text-primary"></i>
+                    <h5 class="mt-2">我的收藏</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card text-center p-3">
+            <div class="card-body">
+                <a href="@Url.Action("MyCoupons", "Customer")" class="text-decoration-none">
+                    <i class="bi bi-gift fs-1 text-primary"></i>
+                    <h5 class="mt-2">优惠券</h5>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 销量前三的菜品 -->
+<div class="mb-5">
+    <h3 class="section-header">热销菜品</h3>
+    @{
+        // 确保有数据显示，如果没有真实数据则使用演示数据
+        var displayTopDishes = topSellingDishes.Count > 0 ? topSellingDishes : GetDemoItems(3);
+    }
+    
+    @if (displayTopDishes.Count > 0)
+    {
+        <div class="row">
+            @foreach (var dish in displayTopDishes)
+            {
+                <div class="col-md-4 mb-4 dish-item">
+                    <div class="card dish-card h-100">
+                        <div class="top-selling-badge">
+                            销量 @(ViewData["Sold_" + dish.DishId] ?? (100 - displayTopDishes.IndexOf(dish) * 20))
+                        </div>
+                        <a href="@Url.Action("Details", "Restaurants", new { id = dish.RestaurantId })">
+                            <img src="@(!string.IsNullOrEmpty(dish.ImageUrl) ? dish.ImageUrl : "/Content/Images/Dishes/default.jpg")" class="card-img-top" alt="@dish.Name">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">@dish.Name</h5>
+                            <div class="rating mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Floor(dish.Rating))
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else if (i - 0.5 <= dish.Rating)
+                                    {
+                                        <i class="bi bi-star-half"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                                <span class="ms-1">@dish.Rating</span>
+                            </div>
+                            <p class="card-text">
+                                <small class="text-muted">@(dish.Restaurant?.Name ?? "未知餐厅")</small><br>
+                                <span class="text-danger fw-bold">¥ @dish.Price.ToString("0.00")</span>
+                            </p>
+                            <a href="@Url.Action("Details", "Restaurants", new { id = dish.RestaurantId })" class="btn btn-outline-primary btn-sm w-100">去点餐</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-4">
+            <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+            <p class="mb-0">暂无热销菜品数据</p>
+        </div>
+    }
+</div>
+
+<!-- 最新订单 -->
+<div class="mb-5">
+    <h3 class="section-header">我的订单</h3>
+    @if (latestOrders != null && latestOrders.Count > 0)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>订单编号</th>
+                        <th>餐厅</th>
+                        <th>状态</th>
+                        <th>下单时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in latestOrders)
+                    {
+                        <tr>
+                            <td>@order.OrderNumber</td>
+                            <td>@(order.Restaurant?.Name ?? "未知餐厅")</td>
+                            <td>
+                                @{
+                                    string statusClass = "";
+                                    switch (order.Status)
+                                    {
+                                        case OrderStatus.Pending:
+                                            statusClass = "badge bg-warning text-dark";
+                                            break;
+                                        case OrderStatus.Preparing:
+                                            statusClass = "badge bg-info text-white";
+                                            break;
+                                        case OrderStatus.ReadyForDelivery:
+                                            statusClass = "badge bg-primary";
+                                            break;
+                                        case OrderStatus.InDelivery:
+                                            statusClass = "badge bg-primary";
+                                            break;
+                                        case OrderStatus.Delivered:
+                                            statusClass = "badge bg-success";
+                                            break;
+                                        case OrderStatus.Cancelled:
+                                            statusClass = "badge bg-danger";
+                                            break;
+                                    }
+                                }
+                                <span class="@statusClass">@GetOrderStatusText(order.Status)</span>
+                            </td>
+                            <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <a href="@Url.Action("Details", "Orders", new { id = order.OrderId })" class="btn btn-info btn-sm">详情</a>
+                                @if (order.Status == OrderStatus.Delivered)
+                                {
+                                    <a href="@Url.Action("Review", "Orders", new { id = order.OrderId })" class="btn btn-success btn-sm">评价</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-3">
+            <a href="@Url.Action("MyOrders", "Orders")" class="btn btn-outline-primary">
+                查看全部订单 <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-4">
+            <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem;"></i>
+            <p class="mb-0">暂无订单记录</p>
+        </div>
+    }
+</div>
+
+<!-- 所有餐厅 -->
+<div class="mb-5 restaurant-section">
+    <h3 class="section-header">餐厅</h3>
+    @{
+        // 确保有数据显示，如果没有真实数据则使用演示数据
+        var displayRestaurants = restaurants.Count > 0 ? restaurants : GetDemoRestaurants(6);
+    }
+    
+    @if (displayRestaurants.Count > 0)
+    {
+        <div class="row">
+            @foreach (var restaurant in displayRestaurants)
+            {
+                <div class="col-md-4 col-sm-6 mb-4 restaurant-item">
+                    <div class="card restaurant-card">
+                        <div class="restaurant-status @(restaurant.IsActive ? "bg-success" : "bg-danger") text-white">
+                            @(restaurant.IsActive ? "营业中" : "休息中")
+                        </div>
+                        @if (restaurant.IsHot)
+                        {
+                            <div class="restaurant-badge">
+                                <span class="badge bg-danger">热门</span>
+                            </div>
+                        }
+                        <a href="@Url.Action("Details", "Restaurants", new { id = restaurant.RestaurantId })">
+                            <img src="@(!string.IsNullOrEmpty(restaurant.ImageUrl) ? restaurant.ImageUrl : "/Content/Images/Restaurants/default.jpg")" class="card-img-top" alt="@restaurant.Name">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">@restaurant.Name</h5>
+                            <div class="rating mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Floor(restaurant.Rating))
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else if (i - 0.5 <= restaurant.Rating)
+                                    {
+                                        <i class="bi bi-star-half"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star"></i>
+                                    }
+                                }
+                                <span class="ms-1">@restaurant.Rating</span>
+                            </div>
+                            <p class="card-text">
+                                <small class="text-muted">@restaurant.Categories</small><br>
+                                <small class="text-muted">@(restaurant.BusinessHours ?? "09:00-21:00")</small><br>
+                                <small class="text-muted">预计配送时间: @restaurant.DeliveryTime 分钟</small>
+                            </p>
+                            <a href="@Url.Action("Details", "Restaurants", new { id = restaurant.RestaurantId })" class="btn btn-primary btn-sm w-100">查看菜单</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="text-center mt-3">
+            <a href="@Url.Action("Index", "Restaurants")" class="btn btn-outline-primary">
+                查看全部餐厅 <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center py-4">
+            <i class="bi bi-shop text-muted d-block mb-2" style="font-size: 2rem;"></i>
+            <p class="mb-0">暂无餐厅信息</p>
+        </div>
+    }
+</div>
+
+
+
+@functions {
+    public string GetOrderStatusText(OrderStatus status)
+    {
+        switch (status)
+        {
+            case OrderStatus.Pending:
+                return "等待商家接单";
+            case OrderStatus.Accepted:
+                return "商家已接单";
+            case OrderStatus.Preparing:
+                return "制作中";
+            case OrderStatus.ReadyForDelivery:
+                return "等待配送";
+            case OrderStatus.InDelivery:
+                return "配送中";
+            case OrderStatus.Delivered:
+                return "已送达";
+            case OrderStatus.Cancelled:
+                return "已取消";
+            default:
+                return "未知状态";
+        }
+    }
+    
+    // 添加帮助方法，确保集合不为null
+    public List<T> SafeList<T>(List<T> list)
+    {
+        return list ?? new List<T>();
+    }
+    
+    // 生成一些示例菜品用于演示
+    public List<Dish> GetDemoItems(int count = 3)
+    {
+        var demoItems = new List<Dish>();
+        string[] names = { "香辣鸡腿堡", "牛肉拉面", "酸菜鱼", "铁板牛柳", "鱼香肉丝", "红烧牛肉" };
+        
+        for (int i = 0; i < count && i < names.Length; i++)
+        {
+            demoItems.Add(new Dish
+            {
+                DishId = i + 1,
+                Name = names[i],
+                Price = 20 + i * 5,
+                Rating = 4.5,
+                ImageUrl = "/Content/Images/Dishes/default.jpg",
+                IsAvailable = true,
+                IsHot = true,
+                Restaurant = new Restaurant
+                {
+                    Name = "示例餐厅" + (i + 1),
+                    RestaurantId = i + 1
+                }
+            });
+        }
+        
+        return demoItems;
+    }
+    
+    // 生成一些示例餐厅用于演示
+    public List<Restaurant> GetDemoRestaurants(int count = 3)
+    {
+        var demoItems = new List<Restaurant>();
+        string[] names = { "川湘居", "鲁菜馆", "粤式小厨", "西餐厅", "日料店", "火锅城" };
+        
+        for (int i = 0; i < count && i < names.Length; i++)
+        {
+            demoItems.Add(new Restaurant
+            {
+                RestaurantId = i + 1,
+                Name = names[i],
+                Rating = 4.0 + (i * 0.2),
+                DeliveryTime = 30 + (i * 5),
+                BusinessHours = "09:00-21:00",
+                Categories = "中餐,快餐",
+                IsActive = true,
+                IsHot = i < 2,
+                ImageUrl = "/Content/Images/Restaurants/default.jpg"
+            });
+        }
+        
+        return demoItems;
+    }
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("页面加载完成");
+        
+        // 添加备用数据逻辑
+        var restaurantSection = document.querySelector('.restaurant-section');
+        var dishSection = document.querySelector('.dish-section');
+        
+        // 检查是否有数据
+        var restaurantItems = document.querySelectorAll('.restaurant-item');
+        var dishItems = document.querySelectorAll('.dish-item');
+        
+        console.log("餐厅数量: " + restaurantItems.length);
+        console.log("菜品数量: " + dishItems.length);
+        
+        // 记录调试信息
+        console.log("数据状态:");
+        console.log("- 餐厅数据: @restaurants.Count");
+        console.log("- 推荐菜品: @recommendedDishes.Count");
+        console.log("- 热销菜品: @topSellingDishes.Count");
+        console.log("- 最新订单: @latestOrders.Count");
+    });
+</script> 

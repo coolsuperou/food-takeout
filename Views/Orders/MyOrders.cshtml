@@ -1,4 +1,5 @@
 @model IEnumerable<food_takeout.Models.Order>
+@using food_takeout.Models
 
 @{
     ViewBag.Title = "我的订单";
@@ -68,7 +69,7 @@
                                         break;
                                 }
                             }
-                            <span class="@statusClass">@Html.DisplayFor(modelItem => order.Status)</span>
+                            <span class="@statusClass">@order.Status.GetDisplayName()</span>
                         </td>
                         <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>

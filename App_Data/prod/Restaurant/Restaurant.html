@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美味快送 - 商家中心</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #292f36;
+            --light-color: #f7f7f7;
+            --accent-color: #6c5ce7;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: #ff5252;
+            border-color: #ff5252;
+        }
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .dashboard-card {
+            height: 100%;
+            transition: all 0.3s;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+        .dashboard-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+        .stats-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            color: white;
+        }
+        .bg-primary-light {
+            background-color: rgba(255, 107, 107, 0.2);
+            color: var(--primary-color);
+        }
+        .bg-secondary-light {
+            background-color: rgba(78, 205, 196, 0.2);
+            color: var(--secondary-color);
+        }
+        .bg-accent-light {
+            background-color: rgba(108, 92, 231, 0.2);
+            color: var(--accent-color);
+        }
+        .section-header {
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        .section-header:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--secondary-color);
+        }
+        .sidebar {
+            background-color: white;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            padding-top: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        .sidebar-link i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .menu-item-card {
+            position: relative;
+        }
+        .menu-item-img {
+            height: 120px;
+            object-fit: cover;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .menu-item-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .order-table th, .order-table td {
+            vertical-align: middle;
+        }
+        #salesChart, #categoryChart {
+            width: 100%;
+            height: 300px;
+        }
+        .merchant-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边导航栏 -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="text-center mb-4">
+                    <img src="https://via.placeholder.com/80" alt="餐厅Logo" class="img-fluid rounded-circle mb-2" width="80">
+                    <h5>川湘菜馆</h5>
+                    <span class="badge bg-success">营业中</span>
+                </div>
+                <div class="px-3">
+                    <a href="#" class="sidebar-link active">
+                        <i class="bi bi-speedometer2"></i> 仪表盘
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-receipt"></i> 订单管理
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-menu-button-wide"></i> 菜品管理
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-graph-up"></i> 数据统计
+                    </a>
+                    <a href="#" class="sidebar-link">
+                        <i class="bi bi-gear"></i> 店铺设置
+                    </a>
+                    <hr>
+                    <a href="#" class="sidebar-link text-danger">
+                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </a>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <!-- 商家信息头部 -->
+                <div class="merchant-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h2><i class="bi bi-shop"></i> 川湘菜馆</h2>
+                            <p class="mb-0">店铺ID: 10086 | 今日营业时间: 10:00-22:00</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <button class="btn btn-light"><i class="bi bi-shop-window"></i> 暂停接单</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 快速统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card dashboard-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-muted">今日订单</h6>
+                                        <h3 class="card-title mb-0">28单</h3>
+                                        <p class="text-success mb-0"><i class="bi bi-arrow-up"></i> 较昨日 +15.4%</p>
+                                    </div>
+                                    <div class="stats-icon bg-primary-light">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card dashboard-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-muted">今日营收</h6>
+                                        <h3 class="card-title mb-0">¥2,186.00</h3>
+                                        <p class="text-success mb-0"><i class="bi bi-arrow-up"></i> 较昨日 +23.7%</p>
+                                    </div>
+                                    <div class="stats-icon bg-secondary-light">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card dashboard-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-muted">待处理订单</h6>
+                                        <h3 class="card-title mb-0">5单</h3>
+                                        <p class="text-danger mb-0"><i class="bi bi-clock"></i> 最早下单于 10:26</p>
+                                    </div>
+                                    <div class="stats-icon bg-accent-light">
+                                        <i class="bi bi-hourglass-split"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 待处理订单 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> 待处理订单</h5>
+                            <a href="#" class="btn btn-sm btn-outline-primary">查看全部订单</a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table order-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>订单号</th>
+                                        <th>顾客</th>
+                                        <th>菜品</th>
+                                        <th>金额</th>
+                                        <th>下单时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>#ORD-2023112501</strong></td>
+                                        <td>张先生</td>
+                                        <td>水煮鱼 x 1，麻婆豆腐 x 1，米饭 x 2</td>
+                                        <td>¥108.00</td>
+                                        <td>10:26</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1">接单</button>
+                                            <button class="btn btn-sm btn-outline-danger">拒绝</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>#ORD-2023112502</strong></td>
+                                        <td>李女士</td>
+                                        <td>宫保鸡丁 x 1，酸辣土豆丝 x 1，米饭 x 1</td>
+                                        <td>¥56.00</td>
+                                        <td>10:42</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1">接单</button>
+                                            <button class="btn btn-sm btn-outline-danger">拒绝</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>#ORD-2023112503</strong></td>
+                                        <td>王先生</td>
+                                        <td>回锅肉 x 1，鱼香肉丝 x 1，米饭 x 2</td>
+                                        <td>¥75.00</td>
+                                        <td>10:58</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary me-1">接单</button>
+                                            <button class="btn btn-sm btn-outline-danger">拒绝</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-light">
+                                        <td><strong>#ORD-2023112498</strong></td>
+                                        <td>赵女士</td>
+                                        <td>辣子鸡 x 1，青椒土豆丝 x 1，米饭 x 2</td>
+                                        <td>¥86.00</td>
+                                        <td>09:46</td>
+                                        <td>
+                                            <span class="badge bg-info">制作中</span>
+                                            <button class="btn btn-sm btn-secondary ms-1">已出餐</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-light">
+                                        <td><strong>#ORD-2023112499</strong></td>
+                                        <td>刘先生</td>
+                                        <td>干锅牛肉 x 1，韭菜炒鸡蛋 x 1，米饭 x 2</td>
+                                        <td>¥92.00</td>
+                                        <td>10:03</td>
+                                        <td>
+                                            <span class="badge bg-info">制作中</span>
+                                            <button class="btn btn-sm btn-secondary ms-1">已出餐</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 销售统计图表 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h4 class="section-header">销售统计</h4>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">近7天营业额</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary">周</button>
+                                    <button class="btn btn-sm btn-secondary">月</button>
+                                    <button class="btn btn-sm btn-outline-secondary">年</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="salesChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">热销品类占比</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="categoryChart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 热销菜品 -->
+                <div class="mb-4">
+                    <h4 class="section-header">热销菜品</h4>
+                    <div class="row">
+                        <div class="col-md-3 col-6">
+                            <div class="card menu-item-card">
+                                <span class="badge bg-danger menu-item-badge">热销</span>
+                                <img src="https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top menu-item-img" alt="菜品图片">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">水煮鱼片</h6>
+                                        <span class="text-danger">¥58.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">今日售出: 26份</small>
+                                        <button class="btn btn-sm btn-outline-secondary">编辑</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card menu-item-card">
+                                <span class="badge bg-danger menu-item-badge">热销</span>
+                                <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top menu-item-img" alt="菜品图片">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">麻婆豆腐</h6>
+                                        <span class="text-danger">¥28.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">今日售出: 22份</small>
+                                        <button class="btn btn-sm btn-outline-secondary">编辑</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card menu-item-card">
+                                <img src="https://images.unsplash.com/photo-1555126634-323283e090fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top menu-item-img" alt="菜品图片">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">宫保鸡丁</h6>
+                                        <span class="text-danger">¥36.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">今日售出: 18份</small>
+                                        <button class="btn btn-sm btn-outline-secondary">编辑</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="card menu-item-card">
+                                <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top menu-item-img" alt="菜品图片">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">干锅牛肉</h6>
+                                        <span class="text-danger">¥68.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">今日售出: 15份</small>
+                                        <button class="btn btn-sm btn-outline-secondary">编辑</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="#" class="btn btn-outline-primary">菜品管理 <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+
+                <!-- 添加菜品模态框 -->
+                <div class="modal fade" id="addDishModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">添加菜品</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label for="dishName" class="form-label">菜品名称</label>
+                                        <input type="text" class="form-control" id="dishName" placeholder="请输入菜品名称">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dishPrice" class="form-label">价格 (¥)</label>
+                                        <input type="number" class="form-control" id="dishPrice" placeholder="请输入价格">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dishCategory" class="form-label">分类</label>
+                                        <select class="form-select" id="dishCategory">
+                                            <option selected>选择分类</option>
+                                            <option value="1">热菜</option>
+                                            <option value="2">凉菜</option>
+                                            <option value="3">主食</option>
+                                            <option value="4">汤类</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dishDescription" class="form-label">描述</label>
+                                        <textarea class="form-control" id="dishDescription" rows="3" placeholder="请输入菜品描述"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dishImage" class="form-label">菜品图片</label>
+                                        <input type="file" class="form-control" id="dishImage">
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary">保存</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript 依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 销售额图表
+        var salesChart = echarts.init(document.getElementById('salesChart'));
+        var salesOption = {
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: ['11/19', '11/20', '11/21', '11/22', '11/23', '11/24', '11/25']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: '营业额',
+                    type: 'line',
+                    data: [1850, 1760, 1930, 2120, 1980, 1740, 2186],
+                    smooth: true,
+                    lineStyle: {
+                        color: '#4ecdc4',
+                        width: 3
+                    },
+                    itemStyle: {
+                        color: '#4ecdc4'
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(78, 205, 196, 0.5)'
+                            }, {
+                                offset: 1, color: 'rgba(78, 205, 196, 0.1)'
+                            }]
+                        }
+                    }
+                }
+            ]
+        };
+        salesChart.setOption(salesOption);
+
+        // 品类占比图表
+        var categoryChart = echarts.init(document.getElementById('categoryChart'));
+        var categoryOption = {
+            tooltip: {
+                trigger: 'item'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                padding: 5
+            },
+            series: [
+                {
+                    name: '销售占比',
+                    type: 'pie',
+                    radius: '70%',
+                    data: [
+                        { value: 38, name: '热菜' },
+                        { value: 25, name: '凉菜' },
+                        { value: 22, name: '主食' },
+                        { value: 15, name: '汤类' }
+                    ],
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    itemStyle: {
+                        borderRadius: 5,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }
+                }
+            ],
+            color: ['#ff6b6b', '#ffa502', '#4ecdc4', '#6c5ce7']
+        };
+        categoryChart.setOption(categoryOption);
+
+        // 窗口大小变化时重新绘制图表
+        window.addEventListener('resize', function() {
+            salesChart.resize();
+            categoryChart.resize();
+        });
+    </script>
+</body>
+</html>

@@ -1,25 +1,48 @@
-@if (Session["CustomerId"] != null)
+@using food_takeout.Models
+@if (Session["UserId"] != null)
 {
-    <ul class="navbar-nav ms-auto">
-        <!-- 'ms-auto' replaces 'navbar-right' in Bootstrap 5 -->
-        <li class="nav-item dropdown">
-            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                @Session["CustomerUsername"] <span class="caret"></span>
+    <div class="d-flex align-items-center">
+        @if (Session["UserType"] as string == UserTypes.Customer)
+        {
+            <a href="@Url.Action("ViewCart", "Orders")" class="position-relative me-3 cart-badge">
+                <i class="bi bi-cart fs-5"></i>
+                @if (Session["CartItemCount"] != null && (int)Session["CartItemCount"] > 0)
+                {
+                    <span class="badge bg-danger rounded-pill">@Session["CartItemCount"]</span>
+                }
             </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <!-- 'dropdown-menu-end' for right alignment -->
-                <li><a class="dropdown-item" href="@Url.Action("MyProfile", "Customers")">个人资料</a></li>
-                <li><a class="dropdown-item" href="@Url.Action("MyOrders", "Orders")">我的订单</a></li>
+        }
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="me-2">@Session["Username"]</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                @if (Session["UserType"] as string == UserTypes.Customer)
+                {
+                    <li><a class="dropdown-item" href="@Url.Action("Profile", "Account")"><i class="bi bi-person"></i> 个人资料</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("Addresses", "Account")"><i class="bi bi-geo-alt"></i> 收货地址</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("MyReviews", "Orders")"><i class="bi bi-star"></i> 我的评价</a></li>
+                }
+                else if (Session["UserType"] as string == UserTypes.Merchant)
+                {
+                    <li><a class="dropdown-item" href="@Url.Action("Profile", "Merchant")"><i class="bi bi-shop"></i> 店铺资料</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("Settings", "Merchant")"><i class="bi bi-gear"></i> 店铺设置</a></li>
+                }
+                else if (Session["UserType"] as string == UserTypes.Rider)
+                {
+                    <li><a class="dropdown-item" href="@Url.Action("Profile", "Rider")"><i class="bi bi-person"></i> 个人资料</a></li>
+                    <li><a class="dropdown-item" href="@Url.Action("Earnings", "Rider")"><i class="bi bi-cash-coin"></i> 我的收益</a></li>
+                }
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")">退出登录</a></li>
+                <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
             </ul>
-        </li>
-    </ul>
+        </div>
+    </div>
 }
 else
 {
-    <ul class="navbar-nav ms-auto">
-        <li class="nav-item">@Html.ActionLink("注册", "Register", "Account", null, new { @class = "nav-link", id = "registerLink" })</li>
-        <li class="nav-item">@Html.ActionLink("登录", "Login", "Account", null, new { @class = "nav-link", id = "loginLink" })</li>
-    </ul>
+    <div class="d-flex">
+        <a href="@Url.Action("Register", "Account")" class="btn btn-outline-primary me-2">注册</a>
+        <a href="@Url.Action("Login", "Account")" class="btn btn-primary">登录</a>
+    </div>
 }

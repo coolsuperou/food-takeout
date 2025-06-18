@@ -8,7 +8,7 @@ namespace food_takeout.Controllers
     /// 限制只有管理员可以访问的特性
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class AdminOnlyAttribute : AuthorizeAttribute
+    public class AdminControllerAttribute : AuthorizeAttribute
     {
         protected override bool AuthorizeCore(HttpContextBase httpContext)
         {
