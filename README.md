@@ -494,7 +494,7 @@ classDiagram
 ### 4.1 用户界面实现
 
 系统采用Bootstrap框架实现响应式布局，确保在不同设备上具有良好的显示效果和用户体验。以下是系统主要界面的运行截图展示：
-<img width="420" alt="image" src="https://github.com/user-attachments/assets/7d453e1a-6f68-41f1-acc1-0f4198f2cdcd" />
+
 
 #### 4.1.1 首页
 
